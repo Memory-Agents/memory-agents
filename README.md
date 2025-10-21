@@ -39,7 +39,7 @@ Can be adapted based on the hardware according to the docs: https://github.com/c
 
 ## Setup
 
-Requirements:
+**Requirements**
 - Docker
 - Local Ollama installation (current setup)
 - Python (for executing script)
@@ -53,6 +53,10 @@ WARNING: env.local SHOULD NEVER BE USED FOR PRODUCTION.
 **Start containers**
 
 `python start_services.py --profile none` (current setup)
+
+**Start Ollama**
+
+`ollama serve`
 
 **Open services**
 
