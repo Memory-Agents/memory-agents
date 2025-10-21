@@ -44,17 +44,17 @@ Requirements:
 - Local Ollama installation (current setup)
 - Python (for executing script)
 
-*Copy environment vars*
+**Copy environment vars**
 
 WARNING: env.local SHOULD NEVER BE USED FOR PRODUCTION.
 
 `cp .env.local .env`
 
-*Start containers*
+**Start containers**
 
 `python start_services.py --profile none` (current setup)
 
-*Open services*
+**Open services**
 
 - n8n (5678)
 - Openwebui (8080)
