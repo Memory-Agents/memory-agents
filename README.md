@@ -26,7 +26,7 @@ Currently the following services are included, we can modify and remove what we 
 
 The repo is currently configured to use a separate Ollama instance running on the host instead of in Docker directly:
 
-```
+```yaml
 x-n8n: &service-n8n
   image: n8nio/n8n:latest
   environment:
@@ -68,3 +68,20 @@ WARNING: env.local SHOULD NEVER BE USED FOR PRODUCTION.
 2. Run `docker exec -it <container_id> n8n export:workflow --backup --output=.n8n/backup/workflows` in the root directory of this repository, substitute container id
   - You can find container id with `docker ps`
 3. Commit to Git
+
+## Install local models
+
+Configure in `docker-compose.yaml` with `ollama pull` (multiple models are also supported):
+
+```yaml
+x-init-ollama: &init-ollama
+  image: ollama/ollama:latest
+  container_name: ollama-pull-llama
+  volumes:
+    - ollama_storage:/root/.ollama
+  entrypoint: /bin/sh
+  command:
+    - "-c"
+    - "sleep 3; OLLAMA_HOST=ollama:11434 ollama pull qwen2.5:7b-instruct-q4_K_M; OLLAMA_HOST=ollama:11434 ollama pull nomic-embed-text"
+    ...
+```
