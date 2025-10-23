@@ -67,7 +67,8 @@ WARNING: env.local SHOULD NEVER BE USED FOR PRODUCTION.
 1. Click save for each workflow
 2. Run `docker exec -it <container_id> n8n export:workflow --backup --output=.n8n/backup/workflows` in the root directory of this repository, substitute container id
   - You can find container id with `docker ps`
-3. Commit to Git
+3. Rename file(s) accordingly
+4. Commit to Git
 
 ## Install local models
 
