@@ -15,8 +15,6 @@ Currently the following services are included, we can modify and remove what we 
 
 ✅ Open WebUI - ChatGPT-like interface to privately interact with your local models and N8N agents
 
-✅ Flowise - No/low code AI agent builder that pairs very well with n8n
-
 ✅ Neo4j - Knowledge graph engine that powers tools like GraphRAG, LightRAG, and Graphiti
 
 ✅ SearXNG - Open source, free internet metasearch engine which aggregates results from up to 229 search services. Users are neither tracked nor profiled, hence the fit with the local AI package.
@@ -63,3 +61,10 @@ WARNING: env.local SHOULD NEVER BE USED FOR PRODUCTION.
 - n8n (5678)
 - Openwebui (8080)
 - ...
+
+## How to export n8n workflow files?
+
+1. Click save for each workflow
+2. Run `docker exec -it <container_id> n8n export:workflow --backup --output=.n8n/backup/workflows` in the root directory of this repository, substitute container id
+  - You can find container id with `docker ps`
+3. Commit to Git
