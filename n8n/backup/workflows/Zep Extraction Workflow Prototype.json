@@ -1,0 +1,1219 @@
+{
+  "name": "Zep Extraction Workflow Prototype",
+  "nodes": [
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -288,
+        -80
+      ],
+      "id": "daefcb9a-0c08-42a4-80f1-51425f664b5d",
+      "name": "When chat message received",
+      "webhookId": "6f8a953c-3d58-4c31-ae1b-9df43262ef52"
+    },
+    {
+      "parameters": {
+        "content": "## Create Episode\n",
+        "height": 80,
+        "width": 176
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        64,
+        -400
+      ],
+      "typeVersion": 1,
+      "id": "a4a4be8d-972f-4959-a935-cc0514d86dce",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "## Create Entities\n",
+        "height": 80,
+        "width": 176
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        64,
+        -80
+      ],
+      "typeVersion": 1,
+      "id": "7520e206-0ae1-499b-ac67-49d38b528cbe",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "## Create Facts\n",
+        "height": 80,
+        "width": 176
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        64,
+        368
+      ],
+      "typeVersion": 1,
+      "id": "3398f423-ba9b-417a-8f59-75853902eb04",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "content": "## Create Community Nodes\n\nUsually community nodes are also created as dynamic updates when entities are added, however for simplification purposes, we only perform the periodic updates. As they are necessary either way to prevent the KG from diverging",
+        "height": 320
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        64,
+        736
+      ],
+      "typeVersion": 1,
+      "id": "b7f233d0-46cb-42ea-aaa7-f7ef8f5966d4",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dateTime",
+      "typeVersion": 2,
+      "position": [
+        -288,
+        -336
+      ],
+      "id": "91ceea13-46eb-4b86-917a-8b03e9ddc66b",
+      "name": "Get Current Date"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        64,
+        -272
+      ],
+      "id": "1dd70e33-c98a-4bfb-8dae-75b6c74025d6",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Loop over input items and add a new field called 'myNewField' to the JSON of each one\nfor (const item of $input.all()) {\n  item.json.myNewField = 1;\n}\n\nreturn $input.all();"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        64,
+        48
+      ],
+      "id": "c157a398-e7df-4462-ab05-5c721d3c8ae2",
+      "name": "Accumulate Last n=4 Conversation Turns + Merge"
+    },
+    {
+      "parameters": {
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        288,
+        48
+      ],
+      "id": "005f5141-704d-4e9f-8dc6-2bf30e41a938",
+      "name": "Extract Entities"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        624,
+        48
+      ],
+      "id": "e366cc1d-78a1-4f2b-a814-180d3502bfd3",
+      "name": "Loop Over Items"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOllama",
+      "typeVersion": 1,
+      "position": [
+        384,
+        208
+      ],
+      "id": "aa56be64-6ba4-46a6-b6d1-cb20b0443488",
+      "name": "Ollama Chat Model",
+      "credentials": {
+        "ollamaApi": {
+          "id": "jGGRrFZmkuGoYwTO",
+          "name": "Ollama account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Loop over input items and add a new field called 'myNewField' to the JSON of each one\nfor (const item of $input.all()) {\n  item.json.myNewField = 1;\n}\n\nreturn $input.all();"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        784,
+        160
+      ],
+      "id": "c5cf1fdb-edf2-4a5d-ae9a-49cfa95e6360",
+      "name": "Embed in VectorDB"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Loop over input items and add a new field called 'myNewField' to the JSON of each one\nfor (const item of $input.all()) {\n  item.json.myNewField = 1;\n}\n\nreturn $input.all();"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1008,
+        80
+      ],
+      "id": "ef39913a-30c8-4300-92ce-19efdbb90a11",
+      "name": "Fulltext Search"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Loop over input items and add a new field called 'myNewField' to the JSON of each one\nfor (const item of $input.all()) {\n  item.json.myNewField = 1;\n}\n\nreturn $input.all();"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1008,
+        240
+      ],
+      "id": "b5698013-d037-456c-8b5d-c5cd866ed2c3",
+      "name": "CosSim Search"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        1216,
+        160
+      ],
+      "id": "f998fee1-b008-464c-b94a-dbb9573a66a4",
+      "name": "Merge1"
+    },
+    {
+      "parameters": {
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        1392,
+        160
+      ],
+      "id": "bc5181e7-2228-47a7-ae5f-afc869c52181",
+      "name": "Entity Resolution Prompt"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOllama",
+      "typeVersion": 1,
+      "position": [
+        1456,
+        400
+      ],
+      "id": "c5177e6d-8ab3-4d4c-abd4-a3bbc4e08f9e",
+      "name": "Ollama Chat Model1",
+      "credentials": {
+        "ollamaApi": {
+          "id": "jGGRrFZmkuGoYwTO",
+          "name": "Ollama account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "de8db798-c5b4-4154-b44b-c735782c1611",
+              "leftValue": "",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1696,
+        160
+      ],
+      "id": "1f2658da-47d2-4ac9-a798-51e0ce8d9cae",
+      "name": "If Duplicate Entry"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Loop over input items and add a new field called 'myNewField' to the JSON of each one\nfor (const item of $input.all()) {\n  item.json.myNewField = 1;\n}\n\nreturn $input.all();"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1904,
+        240
+      ],
+      "id": "d9ba6d2f-ee86-443a-9518-4816d9d0afb6",
+      "name": "Insert in Neo4j"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Loop over input items and add a new field called 'myNewField' to the JSON of each one\nfor (const item of $input.all()) {\n  item.json.myNewField = 1;\n}\n\nreturn $input.all();"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1904,
+        80
+      ],
+      "id": "768b1bd4-4071-417d-b09f-3165d64b736b",
+      "name": "Update Name And Summary in Neo4j"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Loop over input items and add a new field called 'myNewField' to the JSON of each one\nfor (const item of $input.all()) {\n  item.json.myNewField = 1;\n}\n\nreturn $input.all();"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        624,
+        -272
+      ],
+      "id": "74fc08b8-93b7-4042-ba5c-bd9e04cad98d",
+      "name": "Insert Episode in Graphiti"
+    },
+    {
+      "parameters": {
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        288,
+        -272
+      ],
+      "id": "679e8081-7fda-4e7f-b0a1-14691b4c307f",
+      "name": "Temporal Normalization"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOllama",
+      "typeVersion": 1,
+      "position": [
+        384,
+        -128
+      ],
+      "id": "f3a4d326-a04d-4885-a0d7-e538bbddfcc4",
+      "name": "Ollama Chat Model2",
+      "credentials": {
+        "ollamaApi": {
+          "id": "jGGRrFZmkuGoYwTO",
+          "name": "Ollama account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        2096,
+        160
+      ],
+      "id": "6d6449ab-1a5a-4a46-a3f0-d41ba68725c3",
+      "name": "Aggregate"
+    },
+    {
+      "parameters": {
+        "numberInputs": 3
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        384,
+        496
+      ],
+      "id": "19f84913-1141-4edd-a048-c1539e40ea2c",
+      "name": "Merge3"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "aaf46dd7-245d-4fcc-8218-8ec06333dca8",
+              "leftValue": "",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        64,
+        496
+      ],
+      "id": "2325b737-e614-4b69-989b-162f0c6fb4e7",
+      "name": "If Entity Extraction Done"
+    },
+    {
+      "parameters": {
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        608,
+        512
+      ],
+      "id": "636f4e8c-773c-436f-9497-99fd1d7034e9",
+      "name": "Extract Facts"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOllama",
+      "typeVersion": 1,
+      "position": [
+        400,
+        720
+      ],
+      "id": "922fca19-8b17-464a-8425-bec2adc18a5e",
+      "name": "Ollama Chat Model3",
+      "credentials": {
+        "ollamaApi": {
+          "id": "jGGRrFZmkuGoYwTO",
+          "name": "Ollama account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        1120,
+        512
+      ],
+      "id": "0d52b059-12a1-4e26-b359-cffdf822af48",
+      "name": "Loop Over Items1"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Loop over input items and add a new field called 'myNewField' to the JSON of each one\nfor (const item of $input.all()) {\n  item.json.myNewField = 1;\n}\n\nreturn $input.all();"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        608,
+        672
+      ],
+      "id": "08b6000d-7d5f-4881-97f8-fc732c9fae73",
+      "name": "Query Existing Edges"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        912,
+        672
+      ],
+      "id": "345a64b1-129d-4b96-a099-9d7c01f6fb3f",
+      "name": "Merge2"
+    },
+    {
+      "parameters": {
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        1296,
+        592
+      ],
+      "id": "57db3081-2cdd-4766-b8dc-36deac625237",
+      "name": "Fact Resolution"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOllama",
+      "typeVersion": 1,
+      "position": [
+        1264,
+        768
+      ],
+      "id": "852fb2fc-18b4-42c1-be22-9b80c7c43ae2",
+      "name": "Ollama Chat Model4",
+      "credentials": {
+        "ollamaApi": {
+          "id": "jGGRrFZmkuGoYwTO",
+          "name": "Ollama account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "de8db798-c5b4-4154-b44b-c735782c1611",
+              "leftValue": "",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1600,
+        592
+      ],
+      "id": "307b90d2-7a80-458d-8ed7-e79dd01bea5c",
+      "name": "If Duplicate Entry1"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Loop over input items and add a new field called 'myNewField' to the JSON of each one\nfor (const item of $input.all()) {\n  item.json.myNewField = 1;\n}\n\nreturn $input.all();"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1952,
+        672
+      ],
+      "id": "3848fdc1-28fa-4c90-9104-a0822cb024ff",
+      "name": "Insert in Neo4j1"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Loop over input items and add a new field called 'myNewField' to the JSON of each one\nfor (const item of $input.all()) {\n  item.json.myNewField = 1;\n}\n\nreturn $input.all();"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1952,
+        512
+      ],
+      "id": "d2fce59e-b907-49c6-a8e2-adc4da0c9c7b",
+      "name": "Update Name And Summary in Neo4j1"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        64,
+        1104
+      ],
+      "id": "129f70d6-a190-45be-9a3c-a5fb77e9c880",
+      "name": "Periodic Community Node Update"
+    },
+    {
+      "parameters": {
+        "content": "Generate community names containing key terms and relevant subjects from\nthe community summaries.",
+        "height": 96,
+        "width": 224
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        816,
+        960
+      ],
+      "typeVersion": 1,
+      "id": "b82d0634-4997-49b2-a5fb-b656e0948759",
+      "name": "Sticky Note4"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Loop over input items and add a new field called 'myNewField' to the JSON of each one\nfor (const item of $input.all()) {\n  item.json.myNewField = 1;\n}\n\nreturn $input.all();"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        368,
+        1104
+      ],
+      "id": "9b9030f2-09a0-4c55-8830-1bac7b541f7c",
+      "name": "Run Label Propagation Algorithm on KG"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        576,
+        1104
+      ],
+      "id": "e5ea1e97-768f-40e0-9482-11b5ee30fb16",
+      "name": "Loop Over Items2"
+    },
+    {
+      "parameters": {
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        816,
+        1104
+      ],
+      "id": "3858d020-cab8-40cb-8ac9-f2b4c7b9ed88",
+      "name": "Create Community Summary"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOllama",
+      "typeVersion": 1,
+      "position": [
+        848,
+        1280
+      ],
+      "id": "05a989d9-10fe-4de7-9857-34c2f6256694",
+      "name": "Ollama Chat Model5",
+      "credentials": {
+        "ollamaApi": {
+          "id": "jGGRrFZmkuGoYwTO",
+          "name": "Ollama account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Loop over input items and add a new field called 'myNewField' to the JSON of each one\nfor (const item of $input.all()) {\n  item.json.myNewField = 1;\n}\n\nreturn $input.all();"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        368,
+        1296
+      ],
+      "id": "c9d2e50c-e342-47fc-bc03-241487f90139",
+      "name": "Delete All Nodes/Edges Labeled Community"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Loop over input items and add a new field called 'myNewField' to the JSON of each one\nfor (const item of $input.all()) {\n  item.json.myNewField = 1;\n}\n\nreturn $input.all();"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1136,
+        1104
+      ],
+      "id": "1c009381-e3ff-45a1-bf85-a07647574e70",
+      "name": "Insert Community Node in Neo4j"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        2256,
+        400
+      ],
+      "id": "351d46f0-3210-49c0-9259-a88b9ec3bb47",
+      "name": "Merge4"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        2464,
+        400
+      ],
+      "id": "18f6cb0e-df9d-49e3-81d3-0b2ae903d864",
+      "name": "Memory Retrieval"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          },
+          {
+            "node": "Accumulate Last n=4 Conversation Turns + Merge",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge3",
+            "type": "main",
+            "index": 1
+          },
+          {
+            "node": "Memory Retrieval",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Current Date": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Temporal Normalization",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Accumulate Last n=4 Conversation Turns + Merge": {
+      "main": [
+        [
+          {
+            "node": "Extract Entities",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Entities": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [
+          {
+            "node": "If Entity Extraction Done",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Embed in VectorDB",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ollama Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Extract Entities",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embed in VectorDB": {
+      "main": [
+        [
+          {
+            "node": "Fulltext Search",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "CosSim Search",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fulltext Search": {
+      "main": [
+        [
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CosSim Search": {
+      "main": [
+        [
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge1": {
+      "main": [
+        [
+          {
+            "node": "Entity Resolution Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ollama Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Entity Resolution Prompt",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Entity Resolution Prompt": {
+      "main": [
+        [
+          {
+            "node": "If Duplicate Entry",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If Duplicate Entry": {
+      "main": [
+        [
+          {
+            "node": "Update Name And Summary in Neo4j",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Insert in Neo4j",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Name And Summary in Neo4j": {
+      "main": [
+        [
+          {
+            "node": "Aggregate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert in Neo4j": {
+      "main": [
+        [
+          {
+            "node": "Aggregate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Temporal Normalization": {
+      "main": [
+        [
+          {
+            "node": "Insert Episode in Graphiti",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ollama Chat Model2": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Temporal Normalization",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate": {
+      "main": [
+        [
+          {
+            "node": "Merge3",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If Entity Extraction Done": {
+      "main": [
+        [
+          {
+            "node": "Merge3",
+            "type": "main",
+            "index": 2
+          }
+        ],
+        []
+      ]
+    },
+    "Ollama Chat Model3": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Extract Facts",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge3": {
+      "main": [
+        [
+          {
+            "node": "Extract Facts",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Query Existing Edges",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Facts": {
+      "main": [
+        [
+          {
+            "node": "Merge2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items1": {
+      "main": [
+        [
+          {
+            "node": "Merge4",
+            "type": "main",
+            "index": 1
+          }
+        ],
+        [
+          {
+            "node": "Fact Resolution",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Query Existing Edges": {
+      "main": [
+        [
+          {
+            "node": "Merge2",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge2": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ollama Chat Model4": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Fact Resolution",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fact Resolution": {
+      "main": [
+        [
+          {
+            "node": "If Duplicate Entry1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If Duplicate Entry1": {
+      "main": [
+        [
+          {
+            "node": "Update Name And Summary in Neo4j1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Insert in Neo4j1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Name And Summary in Neo4j1": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert in Neo4j1": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Periodic Community Node Update": {
+      "main": [
+        [
+          {
+            "node": "Run Label Propagation Algorithm on KG",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Delete All Nodes/Edges Labeled Community",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Run Label Propagation Algorithm on KG": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items2": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Create Community Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ollama Chat Model5": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Create Community Summary",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Community Summary": {
+      "main": [
+        [
+          {
+            "node": "Insert Community Node in Neo4j",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert Community Node in Neo4j": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert Episode in Graphiti": {
+      "main": [
+        [
+          {
+            "node": "Merge4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge4": {
+      "main": [
+        [
+          {
+            "node": "Memory Retrieval",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "d1c31d3a-daf8-46c3-9c47-d4288b27cc0b",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "a7b839ff6a27bb394762ea0fb7f63f5c1fe4b2c39f88c8b5f6c381ff7d65b31d"
+  },
+  "id": "bRtkbP2vDJEIRLqa",
+  "tags": []
+}
