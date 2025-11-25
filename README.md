@@ -69,6 +69,39 @@ docker compose up
 TODO
 ```
 
+## Folder Structure
+
+```
+.
+├── .github
+│   └── workflows
+│       ├── evaluate_baseline.yml       # Github workflow to evaluate the baseline agent
+│       ├── evaluate_graphiti_vdb.yml   # Github workflow to evaluate the graphiti agent with a vector database
+│       └── evaluate_graphiti.yml       # Github workflow to evaluate the graphiti agent
+├── .vscode
+│   └── settings.json                   # VSCode settings for the project
+├── memory_agents                       # The main application directory
+│   ├── core
+│   │   ├── agents
+│   │   │   ├── baseline.py             # A simple agent with in-memory message history
+│   │   │   ├── graphiti.py             # An agent that uses graphiti for memory
+│   │   │   └── graphiti_vdb.py         # An agent that uses graphiti and a vector database for memory
+│   │   ├── config.py                   # Configuration for the agents
+│   │   └── run_agent.py                # Helper function to run the agents
+│   ├── longmemeval                     # Benchmark for evaluating long-term memory in agents
+│   ├── tests
+│   │   ├── agent_initialization_test.py # Tests for agent initialization
+│   │   └── agent_query_test.py         # Tests for querying the agents
+│   ├── main.py                         # Entry point for running the agents
+│   ├── pyproject.toml                  # Project metadata and dependencies
+│   └── README.md                       # README for the memory_agents application
+├── shared                              # Directory for shared files (currently empty)
+├── .env.example                        # Example environment file
+├── docker-compose.yml                  # Docker compose file for running services
+├── LICENSE                             # Project license
+└── README.md                           # Main README for the project
+```
+
 ## Python formatting and code quality checks
 
 ```
@@ -80,4 +113,11 @@ ruff format .
 cd memory_agents
 ruff check .
 ruff check --fix
+```
+
+## Run PyTest tests
+
+```
+cd memory_agents
+pytest .
 ```
