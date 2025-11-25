@@ -1,0 +1,4 @@
+{
+    "python-envs.pythonProjects": [],
+    "python.defaultInterpreterPath": "${workspaceFolder}/memory_agents/.venv/bin/python"
+}

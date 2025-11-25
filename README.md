@@ -68,3 +68,16 @@ export OPENAI_API_KEY="your-api-key-here"
 docker compose up
 TODO
 ```
+
+## Python formatting and code quality checks
+
+```
+cd memory_agents
+ruff format .
+```
+
+```
+cd memory_agents
+ruff check .
+ruff check --fix
+```
