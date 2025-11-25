@@ -6,18 +6,15 @@ import pytest
 
 
 def test_init_baseline_agent_code():
-    from memory_agents.core.agents.baseline import agent
+    from memory_agents.core.agents.baseline import BaselineAgent
 
-    assert agent is not None
+    baseline_agent = BaselineAgent()
+    assert baseline_agent.agent is not None
 
 
-def test_init_graphiti_agent_code():
-    from memory_agents.core.agents.graphiti import create_agent
-    import asyncio
+@pytest.mark.asyncio
+async def test_init_graphiti_agent_code():
+    from memory_agents.core.agents.graphiti import GraphitiAgent
 
-    async def init_agent():
-        agent = await create_agent()
-        return agent
-
-    agent = asyncio.run(init_agent())
-    assert agent is not None
+    graphit_agent = await GraphitiAgent.create()
+    assert graphit_agent.agent is not None
