@@ -1,15 +1,20 @@
-from memory_agents.core.run_agent import run_agent
-from memory_agents.core.agents.baseline import agent 
+from dotenv import load_dotenv
+load_dotenv()
+
+from core.run_agent import run_agent
+from core.agents.baseline import agent 
 import asyncio
 
-def main():
+async def main():
     print("Hello from memory-agents!")
     print("In order to run agents import and execute the according `run()` function.")
     print("This is a test execution of the baseline agent:")
     
-    response = asyncio.run(run_agent(agent, "Hello World!"))
+    response = await run_agent(agent, "Hello World!")
     print("Response from baseline agent:", response)
 
+    response = await run_agent(agent, "What have i said in my first message?")
+    print("Response from baseline agent:", response)
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())

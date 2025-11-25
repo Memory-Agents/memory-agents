@@ -1,16 +1,15 @@
-from memory_agents.utils.openaiagent import OpenAIAgent
-
-
-async def run_agent(agent: OpenAIAgent, message: str) -> str:
+async def run_agent(agent, message: str) -> dict[str, str]:
     """
     Run an OpenAI LangChain agent with a single user message and return the string response.
     """
-    # Format the message for the agent
     input_data = {
         "messages": [{"role": "user", "content": message}]
     }
 
-    # Invoke the agent asynchronously
-    response: str = await agent.invoke(input_data)
+    # Invoke the agent with the input data and a fixed thread ID for memory tracking
+    response = agent.invoke(input_data, {"configurable": {"thread_id": "1"}})
 
-    return response
+    if "messages" in response and len(response["messages"]) > 0:
+        return response["messages"][-1].content
+    else:
+        raise ValueError("No messages found in agent response")
