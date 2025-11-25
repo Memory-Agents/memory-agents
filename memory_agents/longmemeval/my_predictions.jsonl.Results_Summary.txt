@@ -1,0 +1,9 @@
+Accuracy: 0.724
+	single-session-assistant: 0.9643 (56)
+	knowledge-update: 0.7949 (78)
+	multi-session: 0.6692 (133)
+	single-session-preference: 0.4 (30)
+	temporal-reasoning: 0.594 (133)
+	single-session-user: 0.9429 (70)
+
+Saved to ../../my_predictions.jsonl.eval-results-gpt-4o

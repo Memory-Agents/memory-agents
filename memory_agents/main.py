@@ -15,10 +15,10 @@ async def main():
     )
     print("This is a test execution of the baseline agent:")
 
-    response = await run_agent(agent, "Hello World!")
+    response = await run_agent(agent, "Hello World!", "1")
     print("Response from baseline agent:", response)
 
-    response = await run_agent(agent, "What have i said in my first message?")
+    response = await run_agent(agent, "What have i said in my first message?", "1")
     print("Response from baseline agent:", response)
 
 
