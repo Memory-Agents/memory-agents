@@ -1,7 +1,10 @@
 volumes:
   open-webui:
-  neo4j_data:
-  neo4j_logs:
+  volumes:
+  falkordb_data:
+    driver: local
+  mcp_logs:
+    driver: local
 
 services:
   open-webui:
@@ -17,10 +20,5 @@ services:
 
   graphiti:
     extends:
-      file: ./graphiti/mcp_server/docker-compose.yml
-      service: graphiti-mcp-neo4j
-
-  neo4j:
-    extends:
-      file: ./graphiti/mcp_server/docker-compose.yml
-      service: neo4j
+      file: ./graphiti/mcp_server/docker/docker-compose.yml
+      service: graphiti-falkordb

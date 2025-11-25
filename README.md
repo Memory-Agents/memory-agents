@@ -22,9 +22,9 @@ Currently the following services are included, we can modify and remove what we 
 
 **Copy environment vars**
 
-WARNING: env.local SHOULD NEVER BE USED FOR PRODUCTION.
+WARNING: env.example SHOULD NEVER BE USED FOR PRODUCTION.
 
-`cp .env.local .env`
+`cp .env.example .env`
 
 **Start containers**
 
