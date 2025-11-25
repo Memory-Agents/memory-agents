@@ -1,0 +1,4 @@
+on:
+  push:
+    branches-ignore:
+      - vectorDB_integration
