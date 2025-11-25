@@ -7,7 +7,6 @@ from core.run_agent import run_agent
 from core.agents.baseline import agent
 
 
-
 async def main():
     print("Hello from memory-agents!")
     print("In order to run agents import and execute the according `run()` function.")
