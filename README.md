@@ -2,35 +2,69 @@
 
 This is the initial setup for the ADL project group 14: Memory Augmented Agentic LLM.
 
-## Included Services
+It consists of service dependencies provided by a Docker Compose configuration and the memory agents backend.
 
-Currently the following services are included, we can modify and remove what we do not need as we go:
-
-✅ Open WebUI - ChatGPT-like interface to privately interact with your local models and N8N agents
-
-✅ Neo4j - Knowledge graph engine that powers tools like GraphRAG, LightRAG, and Graphiti
-
-✅ Graphiti - A Graphiti submodule which provides the backend for
-
-## Configuration
+The memory agents backend includes the LongMemEval benchmark: https://github.com/xiaowu0162/LongMemEval
 
 ## Setup
 
-**Requirements**
+#### Requirements
 - Docker
 - Python (for executing script)
+- `uv`: https://docs.astral.sh/uv/
 
-**Copy environment vars**
+#### Step 1: Install `uv`
 
-WARNING: env.example SHOULD NEVER BE USED FOR PRODUCTION.
+Install `uv` according to your OS. See [https://github.com/astral-sh/uv](https://github.com/astral-sh/uv).
 
-`cp .env.example .env`
+```bash
+# On macOS and Linux.
+curl -LsSf https://astral.sh/uv/install.sh | sh
 
-**Start containers**
+# On Windows.
+powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+```
 
-`` (cupython start_services.py --profile nonerrent setup)
 
-**Open services**
+#### Step 2: Install dependencies
+
+```bash
+cd memory_agents
+uv sync --all-groups
+```
+
+### Step 3: Set environment variables
+
+#### Using a `.env` file (recommended)
+
+1. Copy `.env.example` to `.env`:
+
+```bash
+cp .env.example .env
+```
+
+2. Open `.env` and insert your actual API key:
+
+```bash
+# .env
+OPENAI_API_KEY=your-actual-openai-api-key-here
+```
+
+#### Set environment variables manually (alternative)
+
+```bash
+# Set the OpenAI API key as an environment variable
+export OPENAI_API_KEY="your-api-key-here"
+```
+
+#### Service ports
 
 - Openwebui (8080)
 - ...
+
+## How to run
+
+```bash
+docker compose up
+TODO
+```
