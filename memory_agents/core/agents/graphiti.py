@@ -5,7 +5,7 @@ from langchain.agents.middleware import before_model, AgentState, AgentMiddlewar
 from langgraph.runtime import Runtime
 from langchain_mcp_adapters.client import MultiServerMCPClient
 
-from memory_agents.core.config import GRAPHITI_MCP_URL
+from memory_agents.core.config import BASELINE_MODEL_NAME, GRAPHITI_MCP_URL
 
 
 class GraphitiAgentMiddleware(AgentMiddleware):
@@ -30,7 +30,7 @@ class GraphitiAgent:
         self = cls()
         graphiti_tools = await self._get_graphiti_mcp_tools()
         self.agent = create_agent(
-            model="gpt-4o-mini",
+            model=BASELINE_MODEL_NAME,
             system_prompt="You are a memory agent that helps the user to solve tasks.",
             checkpointer=InMemorySaver(),
             tools=graphiti_tools,

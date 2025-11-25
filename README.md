@@ -69,7 +69,7 @@ docker compose up
 TODO
 ```
 
-## Folder Structure
+## Folder structure
 
 ```
 .
