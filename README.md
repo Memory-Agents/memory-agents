@@ -1,88 +1,123 @@
 # Memory Augmented Agentic LLM: Initial Setup
 
 This is the initial setup for the ADL project group 14: Memory Augmented Agentic LLM.
-This repo uses Docker and is built upon the Local AI Packaged repo, by coleam00: https://github.com/coleam00/local-ai-packaged.
 
-## Included Services
+It consists of service dependencies provided by a Docker Compose configuration and the memory agents backend.
 
-Currently the following services are included, we can modify and remove what we do not need as we go:
-
-✅ Self-hosted n8n - Low-code platform with over 400 integrations and advanced AI components
-
-✅ Supabase - Open source database as a service - most widely used database for AI agents
-
-✅ Ollama - Cross-platform LLM platform to install and run the latest local LLMs
-
-✅ Open WebUI - ChatGPT-like interface to privately interact with your local models and N8N agents
-
-✅ Neo4j - Knowledge graph engine that powers tools like GraphRAG, LightRAG, and Graphiti
-
-✅ SearXNG - Open source, free internet metasearch engine which aggregates results from up to 229 search services. Users are neither tracked nor profiled, hence the fit with the local AI package.
-
-✅ Langfuse - Open source LLM engineering platform for agent observability
-
-
-## Configuration
-
-The repo is currently configured to use a separate Ollama instance running on the host instead of in Docker directly:
-
-```yaml
-x-n8n: &service-n8n
-  image: n8nio/n8n:latest
-  environment:
-    - OLLAMA_HOST=host.docker.internal:11434
-```
-
-Can be adapted based on the hardware according to the docs: https://github.com/coleam00/local-ai-packaged.
+The memory agents backend includes the LongMemEval benchmark: https://github.com/xiaowu0162/LongMemEval
 
 ## Setup
 
-**Requirements**
+#### Requirements
 - Docker
-- Local Ollama installation (current setup)
 - Python (for executing script)
+- `uv`: https://docs.astral.sh/uv/
 
-**Copy environment vars**
+#### Step 1: Install `uv`
 
-WARNING: env.local SHOULD NEVER BE USED FOR PRODUCTION.
+Install `uv` according to your OS. See [https://github.com/astral-sh/uv](https://github.com/astral-sh/uv).
 
-`cp .env.local .env`
+```bash
+# On macOS and Linux.
+curl -LsSf https://astral.sh/uv/install.sh | sh
 
-**Start containers**
+# On Windows.
+powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+```
 
-`python start_services.py --profile none` (current setup)
 
-**Start Ollama**
+#### Step 2: Install dependencies
 
-`ollama serve`
+```bash
+cd memory_agents
+uv sync --all-groups
+```
 
-**Open services**
+### Step 3: Set environment variables
 
-- n8n (5678)
+#### Using a `.env` file (recommended)
+
+1. Copy `.env.example` to `.env`:
+
+```bash
+cp .env.example .env
+```
+
+2. Open `.env` and insert your actual API key:
+
+```bash
+# .env
+OPENAI_API_KEY=your-actual-openai-api-key-here
+```
+
+#### Set environment variables manually (alternative)
+
+```bash
+# Set the OpenAI API key as an environment variable
+export OPENAI_API_KEY="your-api-key-here"
+```
+
+#### Service ports
+
 - Openwebui (8080)
 - ...
 
-## How to export n8n workflow files?
+## How to run
 
-1. Click save for each workflow
-2. Run `docker exec -it <container_id> n8n export:workflow --backup --output=.n8n/backup/workflows` in the root directory of this repository, substitute container id
-  - You can find container id with `docker ps`
-3. Rename file(s) accordingly
-4. Commit to Git
+```bash
+docker compose up
+TODO
+```
 
-## Install local models
+## Folder structure
 
-Configure in `docker-compose.yaml` with `ollama pull` (multiple models are also supported):
+```
+.
+├── .github
+│   └── workflows
+│       ├── evaluate_baseline.yml       # Github workflow to evaluate the baseline agent
+│       ├── evaluate_graphiti_vdb.yml   # Github workflow to evaluate the graphiti agent with a vector database
+│       └── evaluate_graphiti.yml       # Github workflow to evaluate the graphiti agent
+├── .vscode
+│   └── settings.json                   # VSCode settings for the project
+├── memory_agents                       # The main application directory
+│   ├── core
+│   │   ├── agents
+│   │   │   ├── baseline.py             # A simple agent with in-memory message history
+│   │   │   ├── graphiti.py             # An agent that uses graphiti for memory
+│   │   │   └── graphiti_vdb.py         # An agent that uses graphiti and a vector database for memory
+│   │   ├── config.py                   # Configuration for the agents
+│   │   └── run_agent.py                # Helper function to run the agents
+│   ├── longmemeval                     # Benchmark for evaluating long-term memory in agents
+│   ├── tests
+│   │   ├── agent_initialization_test.py # Tests for agent initialization
+│   │   └── agent_query_test.py         # Tests for querying the agents
+│   ├── main.py                         # Entry point for running the agents
+│   ├── pyproject.toml                  # Project metadata and dependencies
+│   └── README.md                       # README for the memory_agents application
+├── shared                              # Directory for shared files (currently empty)
+├── .env.example                        # Example environment file
+├── docker-compose.yml                  # Docker compose file for running services
+├── LICENSE                             # Project license
+└── README.md                           # Main README for the project
+```
 
-```yaml
-x-init-ollama: &init-ollama
-  image: ollama/ollama:latest
-  container_name: ollama-pull-llama
-  volumes:
-    - ollama_storage:/root/.ollama
-  entrypoint: /bin/sh
-  command:
-    - "-c"
-    - "sleep 3; OLLAMA_HOST=ollama:11434 ollama pull qwen2.5:7b-instruct-q4_K_M; OLLAMA_HOST=ollama:11434 ollama pull nomic-embed-text"
-    ...
+## Python formatting and code quality checks
+
+```
+cd memory_agents
+ruff format .
+```
+
+```
+cd memory_agents
+ruff check .
+ruff check --fix
+```
+
+## Run PyTest tests
+
+```
+cd memory_agents
+pytest .
 ```

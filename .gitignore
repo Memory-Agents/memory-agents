@@ -1,10 +1,5 @@
 .env
 volumes/
-shared/
 neo4j/
-shared-backup/
 .env.test
-searxng/settings.yml
-searxng/uwsgi*
-supabase/
 .DS_Store
