@@ -25,3 +25,13 @@ async def test_init_graphiti_agent_code():
     response = await run_agent(graphit_agent.agent, "Hello World!")
     assert response is not None
     assert isinstance(response, str)
+
+
+@pytest.mark.asyncio
+async def test_init_graphiti_agent_code():
+    from memory_agents.core.agents.graphiti_vdb import GraphitiChromaDBAgent
+
+    graphiti_vbd_agent = await GraphitiChromaDBAgent.create()
+    response = await run_agent(graphiti_vbd_agent.agent, "Hello World!")
+    assert response is not None
+    assert isinstance(response, str)

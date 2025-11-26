@@ -18,3 +18,11 @@ async def test_init_graphiti_agent_code():
 
     graphit_agent = await GraphitiAgent.create()
     assert graphit_agent.agent is not None
+
+
+@pytest.mark.asyncio
+async def test_init_graphiti_vdb_agent_code():
+    from memory_agents.core.agents.graphiti_vdb import GraphitiChromaDBAgent
+
+    graphit_agent = await GraphitiChromaDBAgent.create()
+    assert graphit_agent.agent is not None
