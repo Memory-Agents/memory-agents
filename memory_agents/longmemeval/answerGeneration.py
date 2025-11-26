@@ -15,6 +15,7 @@ sys.path.insert(0, str(workspace_root))
 # Load environment variables from .env file
 load_dotenv()
 
+
 async def generate_answers_with_agent(
     agent: Any,
     dataset_path: str = "data/longmemeval_oracle.json",
@@ -28,7 +29,7 @@ async def generate_answers_with_agent(
         dataset_path: Path to the input dataset
         output_path: Path to the output predictions file
     """
-    from memory_agents.core.run_agent import  run_agent_messages
+    from memory_agents.core.run_agent import run_agent_messages
 
     with open(dataset_path, "r", encoding="utf-8") as f:
         dataset = json.load(f)
@@ -74,9 +75,7 @@ async def generate_answers_with_agent(
                 messages.append({"role": "system", "content": f"Date: {date}"})
                 # 세션 내 대화 추가 (role 그대로 사용)
                 for turn in session:
-                    messages.append(
-                        {"role": turn["role"], "content": turn["content"]}
-                    )
+                    messages.append({"role": turn["role"], "content": turn["content"]})
 
             # 최종 질문 추가
             messages.append({"role": "user", "content": item["question"]})
@@ -100,7 +99,9 @@ async def generate_answers_with_agent(
 
     print(f"\n✅ All predictions completed! Results saved to: {output_path}")
 
+
 if __name__ == "__main__":
     from memory_agents.core.agents.baseline import BaselineAgent
+
     baseline_agent = BaselineAgent()
     asyncio.run(generate_answers_with_agent(baseline_agent))

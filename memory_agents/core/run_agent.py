@@ -1,4 +1,3 @@
-
 async def run_agent_messages(
     agent,
     messages: list[dict[str, str]],
@@ -22,6 +21,7 @@ async def run_agent_messages(
         {"configurable": {"thread_id": thread_id}},
     )
     return extract_response_content(response)
+
 
 # The thread_id is passed as an argument and directly forwarded to configurable.thread_id, so each message uses independent memory.
 async def run_agent(agent, message: str, thread_id: str) -> str:

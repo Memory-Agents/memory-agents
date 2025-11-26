@@ -6,16 +6,18 @@ load_dotenv()
 
 import pytest
 
+
 @pytest.mark.asyncio
 async def test_query_baseline_agent():
     from memory_agents.core.agents.baseline import BaselineAgent
+
     baseline_agent = BaselineAgent()
     response = await run_agent(baseline_agent.agent, "Hello World!", "1")
     assert response is not None
     assert isinstance(response, str)
 
+
 @pytest.mark.asyncio
-@pytest.mark.skip(reason="Requires Graphiti MCP server running on localhost:8000")
 async def test_init_graphiti_agent_code():
     from memory_agents.core.agents.graphiti import GraphitiAgent
 
