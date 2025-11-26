@@ -57,7 +57,7 @@ async def generate_answers_with_agent(
             if item["question_id"] in processed_ids:
                 continue
 
-            # 각 question_id 별로 다른 thread_id 사용
+            # Use a different thread_id for each question_id
             thread_id = str(item["question_id"])
             print(f"Using thread ID: {thread_id}")
 
@@ -70,18 +70,18 @@ async def generate_answers_with_agent(
             # Build messages list
             messages = []
             for date, session in zip(item["haystack_dates"], item["haystack_sessions"]):
-                # 날짜 정보 추가
+                # Add date information
                 messages.append({"role": "system", "content": f"Date: {date}"})
-                # 세션 내 대화 추가 (role 그대로 사용)
+                # Add conversation turns within the session (use role as is)
                 for turn in session:
                     messages.append(
                         {"role": turn["role"], "content": turn["content"]}
                     )
 
-            # 최종 질문 추가
+            # Add the final question
             messages.append({"role": "user", "content": item["question"]})
 
-            # 전체 messages를 한 번에 에이전트에 전달
+            # Pass all messages to the agent at once
             hypothesis = await run_agent_messages(
                 agent.agent,
                 messages,
@@ -100,7 +100,83 @@ async def generate_answers_with_agent(
 
     print(f"\n✅ All predictions completed! Results saved to: {output_path}")
 
+def _getDatasetPath(difficulty: str) -> str:
+    base_path = "data/"
+    if difficulty == "easy":
+        return os.path.join(base_path, "longmemeval_oracle.json")
+    elif difficulty == "medium":
+        return os.path.join(base_path, "longmemeval_s_cleaned.json")
+    elif difficulty == "hard":
+        return os.path.join(base_path, "longmemeval_m_cleaned.json")
+    else:
+        raise ValueError("Invalid difficulty level. Choose from 'easy', 'medium', or 'hard'.")
+
+def getDatasetPathWithCheck(difficulty: str) -> str:
+    dataset_path = _getDatasetPath(difficulty)
+    if not os.path.exists(dataset_path):
+        # Map difficulty to download URL
+        url_map = {
+            "easy": "https://huggingface.co/datasets/xiaowu0162/longmemeval-cleaned/resolve/main/longmemeval_oracle.json",
+            "medium": "https://huggingface.co/datasets/xiaowu0162/longmemeval-cleaned/resolve/main/longmemeval_s_cleaned.json",
+            "hard": "https://huggingface.co/datasets/xiaowu0162/longmemeval-cleaned/resolve/main/longmemeval_m_cleaned.json",
+        }
+        url = url_map.get(difficulty)
+        if url is None:
+            raise ValueError(f"Invalid difficulty: {difficulty}")
+        # Ensure the data directory exists
+        os.makedirs(os.path.dirname(dataset_path), exist_ok=True)
+        print(f"Dataset file not found: {dataset_path}\nDownloading from {url} ...")
+        import subprocess
+        try:
+            subprocess.run([
+                "wget", url, "-O", dataset_path
+            ], check=True)
+        except Exception as e:
+            raise RuntimeError(f"Failed to download dataset: {e}")
+        if not os.path.exists(dataset_path):
+            raise FileNotFoundError(f"Failed to download dataset file: {dataset_path}")
+    return dataset_path
+
+def evaluate(difficulty, agent):
+    # Map difficulty to dataset and output file
+    dataset_path = getDatasetPathWithCheck(difficulty=difficulty)
+    output_file_map = {
+        "easy": "my_predictions_oracle.jsonl",
+        "medium": "my_predictions_s_cleaned.jsonl",
+        "hard": "my_predictions_m_cleaned.jsonl",
+    }
+    output_path = output_file_map[difficulty]
+    asyncio.run(generate_answers_with_agent(agent, dataset_path=dataset_path, output_path=output_path))
+
+    # The evaluation script expects to be run from the src/evaluation directory
+    eval_dir = os.path.join(os.path.dirname(__file__), "src/evaluation")
+    # Map difficulty to gold file
+    gold_file_map = {
+        "easy": "../../data/longmemeval_oracle.json",
+        "medium": "../../data/longmemeval_s_cleaned.json",
+        "hard": "../../data/longmemeval_m_cleaned.json",
+    }
+    gold_file = gold_file_map[difficulty]
+    # Model name can be changed as needed
+    model_name = "gpt-4o"
+    print(f"\nRunning evaluation for {difficulty} set...")
+    import sys
+    try:
+        subprocess.run([
+            sys.executable, "evaluate_qa.py", model_name, f"../../{output_path}", gold_file
+        ], cwd=eval_dir, check=True)
+    except Exception as e:
+        print(f"Evaluation failed: {e}")
+
+
 if __name__ == "__main__":
+    import subprocess
     from memory_agents.core.agents.baseline import BaselineAgent
-    baseline_agent = BaselineAgent()
-    asyncio.run(generate_answers_with_agent(baseline_agent))
+    difficulty = "easy"  # Set difficulty here: "easy", "medium", or "hard"
+    agent = BaselineAgent()
+    evaluate(difficulty, agent)
+
+    
+
+
+

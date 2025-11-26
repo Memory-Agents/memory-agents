@@ -15,7 +15,6 @@ async def test_query_baseline_agent():
     assert isinstance(response, str)
 
 @pytest.mark.asyncio
-@pytest.mark.skip(reason="Requires Graphiti MCP server running on localhost:8000")
 async def test_init_graphiti_agent_code():
     from memory_agents.core.agents.graphiti import GraphitiAgent
 
