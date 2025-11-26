@@ -84,6 +84,7 @@ TODO
 │   ├── core
 │   │   ├── agents
 │   │   │   ├── baseline.py             # A simple agent with in-memory message history
+|   |   |   ├── baseline_vdb.py         # A simple agent  that uses a vector database for memory
 │   │   │   ├── graphiti.py             # An agent that uses graphiti for memory
 │   │   │   └── graphiti_vdb.py         # An agent that uses graphiti and a vector database for memory
 │   │   ├── config.py                   # Configuration for the agents
