@@ -6,13 +6,17 @@ load_dotenv()
 
 import pytest
 
+
 @pytest.mark.asyncio
 async def test_query_baseline_agent():
     from memory_agents.core.agents.baseline import BaselineAgent
+
     baseline_agent = BaselineAgent()
-    response = await run_agent(baseline_agent.agent, "Hello World!", "1")
+    thread_id = "1"
+    response = await run_agent(baseline_agent.agent, "Hello World!", thread_id)
     assert response is not None
     assert isinstance(response, str)
+
 
 @pytest.mark.asyncio
 async def test_query_graphiti_agent_code():
