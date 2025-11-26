@@ -32,7 +32,7 @@ python3 answerGeneration.py
 
 ```bash
 cd src/evaluation
-python3 evaluate_qa.py gpt-4o ../../my_predictions.jsonl ../../data/longmemeval_oracle.json
+uv run evaluate_qa.py gpt-4o ../../my_predictions.jsonl ../../data/longmemeval_oracle.json
 ```
 
 **Output Files:**
