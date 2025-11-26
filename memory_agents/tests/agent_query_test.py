@@ -19,11 +19,30 @@ async def test_query_baseline_agent():
 
 
 @pytest.mark.asyncio
-async def test_init_graphiti_agent_code():
+async def test_query_graphiti_agent_code():
     from memory_agents.core.agents.graphiti import GraphitiAgent
 
-    graphit_agent = await GraphitiAgent.create()
-    thread_id = "1"
-    response = await run_agent(graphit_agent.agent, "Hello World!", thread_id)
+    graphiti_agent = await GraphitiAgent.create()
+    response = await run_agent(graphiti_agent.agent, "Hello World!")
+    assert response is not None
+    assert isinstance(response, str)
+
+
+@pytest.mark.asyncio
+async def test_query_baseline_vdb_agent_code():
+    from memory_agents.core.agents.baseline_vdb import BaselineAgent
+
+    baseline_vdb_agent = BaselineAgent()
+    response = await run_agent(baseline_vdb_agent.agent, "Hello World!")
+    assert response is not None
+    assert isinstance(response, str)
+
+
+@pytest.mark.asyncio
+async def test_query_graphiti_vbd_agent_code():
+    from memory_agents.core.agents.graphiti_vdb import GraphitiChromaDBAgent
+
+    graphiti_vbd_agent = await GraphitiChromaDBAgent.create()
+    response = await run_agent(graphiti_vbd_agent.agent, "Hello World!")
     assert response is not None
     assert isinstance(response, str)
