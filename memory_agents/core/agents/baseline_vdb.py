@@ -12,7 +12,7 @@ import chromadb
 from chromadb.config import Settings
 from datetime import datetime
 
-from memory_agents.core.config import BASELINE_MODEL_NAME
+from memory_agents.core.config import BASELINE_CHROMADB_DIR, BASELINE_MODEL_NAME
 
 
 BASELINE_CHROMADB_SYSTEM_PROMPT = """You are a memory agent that helps the user to solve tasks.
@@ -30,7 +30,7 @@ Focus on helping the user effectively by using the provided context when relevan
 class ChromaDBManager:
     """Manages ChromaDB integration for conversational RAG"""
 
-    def __init__(self, persist_directory: str = "./baseline_chroma_db"):
+    def __init__(self, persist_directory: str = BASELINE_CHROMADB_DIR):
         self.client = chromadb.Client(
             Settings(
                 anonymized_telemetry=False,
@@ -195,7 +195,7 @@ class ChromaDBStorageMiddleware(AgentMiddleware):
 class BaselineAgent:
     """Baseline agent with ChromaDB RAG integration"""
 
-    def __init__(self, persist_directory: str = "./baseline_chroma_db") -> None:
+    def __init__(self, persist_directory: str = BASELINE_CHROMADB_DIR) -> None:
         # Initialize ChromaDB
         self.chroma_manager = ChromaDBManager(persist_directory)
 
