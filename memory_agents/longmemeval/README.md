@@ -2,13 +2,7 @@
 
 ## 1. Environment Setup
 
-### 1.1 Python Environment Creation and Package Installation
-```bash
-# Create Conda environment
-conda create -n LongMemEval python=3.9 -y
-conda activate LongMemEval
-pip install -r requirements-lite.txt
-```
+See the toplevel README.md of the repository.
 
 ## 2. Answer Generation
 
@@ -17,7 +11,7 @@ pip install -r requirements-lite.txt
 ```bash
 # Run from workspace root
 cd /memory_agents/longmemeval
-python3 answerGeneration.py
+uv run answerGeneration.py
 ```
 
 **Features:**
