@@ -1,4 +1,4 @@
 on:
   push:
-    branches-ignore:
-      - vectorDB_integration
+    branches:
+      - evaluate_baseline
