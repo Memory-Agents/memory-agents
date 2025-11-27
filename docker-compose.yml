@@ -1,10 +1,10 @@
 volumes:
   open-webui:
-  volumes:
   falkordb_data:
     driver: local
   mcp_logs:
     driver: local
+  mlflow_data:
 
 services:
   open-webui:

@@ -95,7 +95,7 @@ async def generate_answers_with_agent(
             )
             out.flush()  # Write to disk immediately
 
-            print(f"Done ✓")
+            print("Done ✓")
 
     print(f"\n✅ All predictions completed! Results saved to: {output_path}")
 

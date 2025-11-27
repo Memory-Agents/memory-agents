@@ -1,3 +1,16 @@
+import mlflow
+
+from memory_agents.core.config import MLFLOW_EXPERIMENT_NAME, MLFLOW_TRACKING_URI
+
+# Calling autolog for LangChain will enable trace logging.
+mlflow.langchain.autolog()
+
+# Optional: Set a tracking URI and an experiment
+mlflow.set_experiment(MLFLOW_EXPERIMENT_NAME)
+mlflow.set_tracking_uri(MLFLOW_TRACKING_URI)
+
+print("Tracking URI:", mlflow.get_tracking_uri())
+
 async def run_agent_messages(
     agent,
     messages: list[dict[str, str]],
