@@ -78,8 +78,24 @@ export OPENAI_API_KEY="your-api-key-here"
 
 #### Service ports
 
-- Openwebui (8080)
-- ...
+The `docker-compose.yml` in the root directory defines and orchestrates several services. Once `docker compose up -d` is executed, these services will be accessible via the following ports:
+
+-   **Open WebUI**: A user interface for interacting with LLMs.
+    -   Accessible at `http://localhost:8080`
+-   **Graphiti MCP Server**: The core Graphiti memory service.
+    -   Accessible at `http://localhost:8000` (as configured in `memory_agents/core/config.py`)
+-   **Langfuse WebUI**: User interface for Langfuse tracing and analytics.
+    -   Accessible at `http://localhost:3002`
+-   **Langfuse Worker**: Backend worker for Langfuse (usually not directly accessed by the user).
+    -   Exposed on port `3030` (internal to Docker network)
+-   **ClickHouse**: Database for Langfuse (internal).
+    -   Exposed on ports `8123`, `9000`, `9009` (internal)
+-   **MinIO**: Object storage for Langfuse (internal).
+    -   Exposed on ports `9000`, `9001` (internal)
+-   **PostgreSQL**: Database for Langfuse (internal).
+    -   Exposed on port `5432` (internal)
+-   **Redis/Valkey**: Caching/message broker for Langfuse (internal).
+    -   Exposed on port `6379` (internal)
 
 ## How to run
 
