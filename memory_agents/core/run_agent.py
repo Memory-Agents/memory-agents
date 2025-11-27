@@ -11,14 +11,11 @@ langfuse = get_client()
 
 logger = logging.getLogger()
 
-env_vars = dotenv_values(".env")
-print(env_vars)
-
 # Verify connection
 if langfuse.auth_check():
     logger.info("Langfuse client is authenticated and ready!")
 else:
-    raise ConnectionError("Langfuse client authentication failed.")
+    logger.error("Langfuse client authentication failed.")
 
 # Initialize Langfuse CallbackHandler for Langchain (tracing)
 langfuse_handler = CallbackHandler()
