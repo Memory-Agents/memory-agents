@@ -1,15 +1,28 @@
-import mlflow
+import logging
+from dotenv import dotenv_values, load_dotenv
 
-from memory_agents.core.config import MLFLOW_EXPERIMENT_NAME, MLFLOW_TRACKING_URI
+load_dotenv()
 
-# Calling autolog for LangChain will enable trace logging.
-mlflow.langchain.autolog()
+from langfuse import get_client
+from langfuse.langchain import CallbackHandler
 
-# Optional: Set a tracking URI and an experiment
-mlflow.set_experiment(MLFLOW_EXPERIMENT_NAME)
-mlflow.set_tracking_uri(MLFLOW_TRACKING_URI)
+# Initialize Langfuse client
+langfuse = get_client()
 
-print("Tracking URI:", mlflow.get_tracking_uri())
+logger = logging.getLogger()
+
+env_vars = dotenv_values(".env")
+print(env_vars)
+
+# Verify connection
+if langfuse.auth_check():
+    logger.info("Langfuse client is authenticated and ready!")
+else:
+    raise ConnectionError("Langfuse client authentication failed.")
+
+# Initialize Langfuse CallbackHandler for Langchain (tracing)
+langfuse_handler = CallbackHandler()
+
 
 async def run_agent_messages(
     agent,
@@ -31,7 +44,7 @@ async def run_agent_messages(
     input_data = {"messages": messages}
     response = agent.invoke(
         input_data,
-        {"configurable": {"thread_id": thread_id}},
+        {"configurable": {"thread_id": thread_id}, "callbacks": [langfuse_handler]},
     )
     return extract_response_content(response)
 
@@ -51,7 +64,7 @@ async def run_agent(agent, message: str, thread_id: str) -> str:
     input_data = {"messages": [{"role": "user", "content": message}]}
     response = agent.invoke(
         input_data,
-        {"configurable": {"thread_id": thread_id}},
+        {"configurable": {"thread_id": thread_id}, "callbacks": [langfuse_handler]},
     )
     return extract_response_content(response)
 

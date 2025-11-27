@@ -19,5 +19,5 @@ dependencies = [
     "python-dotenv>=1.2.1",
     "ruff>=0.14.6",
     "tqdm>=4.67.1",
-    "mlflow>=3.6.0",
+    "langfuse>=3.10.1",
 ]
