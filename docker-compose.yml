@@ -1,8 +1,10 @@
-include:
-  - ./graphiti/mcp_server/docker/docker-compose.yml
-
 volumes:
   open-webui:
+  volumes:
+  falkordb_data:
+    driver: local
+  mcp_logs:
+    driver: local
 
 services:
   open-webui:
@@ -15,3 +17,11 @@ services:
       - "host.docker.internal:host-gateway"
     volumes:
       - open-webui:/app/backend/data
+
+  graphiti:
+    extends:
+      file: ./graphiti/mcp_server/docker/docker-compose.yml
+      service: graphiti-falkordb
+    env_file:
+      - path: ./.env
+        required: false
