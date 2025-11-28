@@ -1,10 +1,15 @@
 volumes:
   open-webui:
-  volumes:
   falkordb_data:
     driver: local
   mcp_logs:
     driver: local
+  mlflow_data:
+  valkey-data:
+  langfuse_postgres_data:
+  langfuse_clickhouse_data:
+  langfuse_clickhouse_logs:
+  langfuse_minio_data:
 
 services:
   open-webui:
@@ -22,3 +27,28 @@ services:
     extends:
       file: ./graphiti/mcp_server/docker/docker-compose.yml
       service: graphiti-falkordb
+
+  langfuse-worker:
+    extends:
+      file: ./langfuse/docker-compose.yml
+      service: langfuse-worker
+  langfuse-web:
+    extends:
+      file: ./langfuse/docker-compose.yml
+      service: langfuse-web
+  clickhouse:
+    extends:
+      file: ./langfuse/docker-compose.yml
+      service: clickhouse
+  minio:
+    extends:
+      file: ./langfuse/docker-compose.yml
+      service: minio
+  postgres:
+    extends:
+      file: ./langfuse/docker-compose.yml
+      service: postgres
+  redis:
+    extends:
+      file: ./langfuse/docker-compose.yml
+      service: redis

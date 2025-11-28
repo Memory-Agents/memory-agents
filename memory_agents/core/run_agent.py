@@ -1,3 +1,26 @@
+import logging
+from dotenv import dotenv_values, load_dotenv
+
+load_dotenv()
+
+from langfuse import get_client
+from langfuse.langchain import CallbackHandler
+
+# Initialize Langfuse client
+langfuse = get_client()
+
+logger = logging.getLogger()
+
+# Verify connection
+if langfuse.auth_check():
+    logger.info("Langfuse client is authenticated and ready!")
+else:
+    logger.error("Langfuse client authentication failed.")
+
+# Initialize Langfuse CallbackHandler for Langchain (tracing)
+langfuse_handler = CallbackHandler()
+
+
 async def run_agent_messages(
     agent,
     messages: list[dict[str, str]],
@@ -18,7 +41,7 @@ async def run_agent_messages(
     input_data = {"messages": messages}
     response = agent.invoke(
         input_data,
-        {"configurable": {"thread_id": thread_id}},
+        {"configurable": {"thread_id": thread_id}, "callbacks": [langfuse_handler]},
     )
     return extract_response_content(response)
 
@@ -38,7 +61,7 @@ async def run_agent(agent, message: str, thread_id: str) -> str:
     input_data = {"messages": [{"role": "user", "content": message}]}
     response = agent.invoke(
         input_data,
-        {"configurable": {"thread_id": thread_id}},
+        {"configurable": {"thread_id": thread_id}, "callbacks": [langfuse_handler]},
     )
     return extract_response_content(response)
 
