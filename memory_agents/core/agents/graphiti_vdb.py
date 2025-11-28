@@ -14,7 +14,7 @@ from chromadb.config import Settings
 from datetime import datetime
 
 from memory_agents.core.agents.graphiti_base_agent import GraphitiBaseAgent
-from memory_agents.core.config import BASELINE_MODEL_NAME, GRAPHITI_MCP_URL
+from memory_agents.core.config import BASELINE_MODEL_NAME, GRAPHITI_VDB_CHROMADB_DIR
 
 GRAPHITI_CHROMADB_SYSTEM_PROMPT = """You are a memory-retrieval agent that uses both Graphiti MCP tools and ChromaDB RAG to support the user.
 Episodes and conversation history are automatically inserted by middleware into both Graphiti and ChromaDB.
@@ -112,7 +112,7 @@ Do not hallucinate memory. Only use information returned by Graphiti and ChromaD
 class ChromaDBManager:
     """Manages ChromaDB integration for conversational RAG"""
 
-    def __init__(self, persist_directory: str = "./chroma_memory_db"):
+    def __init__(self, persist_directory: str = GRAPHITI_VDB_CHROMADB_DIR):
         self.client = chromadb.Client(
             Settings(
                 anonymized_telemetry=False,
@@ -288,7 +288,7 @@ class GraphitiChromaDBAgent(GraphitiBaseAgent):
         self.chroma_manager = None
 
     @classmethod
-    async def create(cls, persist_directory: str = "./chroma_memory_db") -> Self:
+    async def create(cls, persist_directory: str = GRAPHITI_VDB_CHROMADB_DIR) -> Self:
         self = cls()
 
         # Initialize ChromaDB
