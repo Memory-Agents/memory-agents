@@ -84,11 +84,21 @@ TODO
 │   ├── core
 │   │   ├── agents
 │   │   │   ├── baseline.py             # A simple agent with in-memory message history
+|   |   |   ├── baseline_vdb.py         # A simple agent  that uses a vector database for memory
 │   │   │   ├── graphiti.py             # An agent that uses graphiti for memory
 │   │   │   └── graphiti_vdb.py         # An agent that uses graphiti and a vector database for memory
 │   │   ├── config.py                   # Configuration for the agents
 │   │   └── run_agent.py                # Helper function to run the agents
 │   ├── longmemeval                     # Benchmark for evaluating long-term memory in agents
+│   │   ├── src
+│   │   │   ├── evaluation              # Scripts for evaluating QA and retrieval metrics
+│   │   │   ├── generation              # Scripts for running answer generation
+│   │   │   ├── index_expansion         # Scripts for expanding the index with different methods
+│   │   │   ├── retrieval               # Scripts for running retrieval
+│   │   │   └── utils                   # Utility scripts
+│   │   ├── data                        # Data for the benchmark
+│   │   ├── answerGeneration.py         # Script for generating answers
+│   │   └── README.md
 │   ├── tests
 │   │   ├── agent_initialization_test.py # Tests for agent initialization
 │   │   └── agent_query_test.py         # Tests for querying the agents

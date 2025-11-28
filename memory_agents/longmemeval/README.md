@@ -1,6 +1,10 @@
 # LongMemEval Execution Guide (Oracle Dataset - 500 Questions)
 
-## 1. Answer Generation
+## 1. Environment Setup
+
+See the toplevel README.md of the repository.
+
+## 2. Answer Generation
 
 **Using BaselineAgent (Memory-Augmented Agent):**
 
