@@ -1,7 +1,7 @@
 from typing import Any, Self
 from langchain.agents import create_agent
 from langgraph.checkpoint.memory import InMemorySaver
-from langchain.agents.middleware import before_model, AgentState, AgentMiddleware
+from langchain.agents.middleware import AgentState, AgentMiddleware
 from langgraph.runtime import Runtime
 from langchain_mcp_adapters.client import MultiServerMCPClient
 

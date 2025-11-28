@@ -1,12 +1,9 @@
-import sys
 import json
 from tqdm import tqdm
 import openai
 from openai import OpenAI
 import backoff
-import random
-import numpy as np
-from datetime import datetime, timedelta
+from datetime import datetime
 import argparse
 from transformers import AutoTokenizer
 import tiktoken

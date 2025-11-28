@@ -33,7 +33,6 @@ async def generate_answers_with_agent(
         dataset_path: Path to the input dataset
         output_path: Path to the output predictions file
     """
-    from memory_agents.core.run_agent import run_agent_messages
 
     with open(dataset_path, "r", encoding="utf-8") as f:
         dataset = json.load(f)
