@@ -131,3 +131,7 @@ ruff check --fix
 cd memory_agents
 uv run pytest .
 ```
+
+## Benchmarking
+
+For detailed instructions on running benchmarks, please refer to the [LongMemEval Execution Guide](memory_agents/longmemeval/README.md).
