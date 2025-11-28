@@ -55,6 +55,53 @@ async def generate_answers_with_agent(
     remaining = total - len(processed_ids)
     print(f"Starting to process {total} questions... (Remaining: {remaining})\n")
 
+    with open(output_path, "a", encoding="utf-8") as out:
+        for idx, item in enumerate(dataset, 1):
+            # Skip already processed questions
+            if item["question_id"] in processed_ids:
+                continue
+
+            # Use a different thread_id for each question_id
+            thread_id = str(item["question_id"])
+            print(f"Using thread ID: {thread_id}")
+
+            print(
+                f"[{idx}/{total}] Processing question ID: {item['question_id']}...",
+                end=" ",
+                flush=True,
+            )
+
+            # Build messages list
+            messages = []
+            for date, session in zip(item["haystack_dates"], item["haystack_sessions"]):
+                # Add date information
+                messages.append({"role": "system", "content": f"Date: {date}"})
+                # Add conversation turns within the session (use role as is)
+                for turn in session:
+                    messages.append({"role": turn["role"], "content": turn["content"]})
+
+            # Add the final question
+            messages.append({"role": "user", "content": item["question"]})
+
+            # Pass all messages to the agent at once
+            hypothesis = await run_agent_messages(
+                agent.agent,
+                messages,
+                thread_id=thread_id,
+            )
+            out.write(
+                json.dumps(
+                    {"question_id": item["question_id"], "hypothesis": hypothesis},
+                    ensure_ascii=False,
+                )
+                + "\n"
+            )
+            out.flush()  # Write to disk immediately
+
+            print("Done ✓")
+
+    print(f"\n✅ All predictions completed! Results saved to: {output_path}")
+
 
 def _getDatasetPath(difficulty: str) -> str:
     base_path = "data/"
