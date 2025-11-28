@@ -157,7 +157,7 @@ If you prefer to work inside the virtual environment's shell:
 source .venv/bin/activate
 
 # Now you can run python scripts directly
-uv run pytest tests/agent_query_test.py::test_query_graphiti_agent
+pytest tests/agent_query_test.py::test_query_graphiti_agent
 
 # Deactivate when you're done
 deactivate
