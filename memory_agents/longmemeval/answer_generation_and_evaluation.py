@@ -19,6 +19,7 @@ load_dotenv()
 # Import config
 from memory_agents.config import LONGMEMEVAL_DIFFICIULTY_LEVEL, LONGMEMEVAL_URL_MAP
 
+
 async def generate_answers_with_agent(
     agent: Any,
     dataset_path: str = "data/longmemeval_oracle.json",
@@ -32,7 +33,7 @@ async def generate_answers_with_agent(
         dataset_path: Path to the input dataset
         output_path: Path to the output predictions file
     """
-    from memory_agents.core.run_agent import  run_agent_messages
+    from memory_agents.core.run_agent import run_agent_messages
 
     with open(dataset_path, "r", encoding="utf-8") as f:
         dataset = json.load(f)
@@ -65,7 +66,10 @@ def _getDatasetPath(difficulty: str) -> str:
     elif difficulty == "hard":
         return os.path.join(base_path, "longmemeval_m_cleaned.json")
     else:
-        raise ValueError("Invalid difficulty level. Choose from 'easy', 'medium', or 'hard'.")
+        raise ValueError(
+            "Invalid difficulty level. Choose from 'easy', 'medium', or 'hard'."
+        )
+
 
 def getDatasetPathWithCheck(difficulty: str) -> str:
     dataset_path = _getDatasetPath(difficulty)
@@ -80,13 +84,14 @@ def getDatasetPathWithCheck(difficulty: str) -> str:
         try:
             response = requests.get(url, timeout=300)  # 5 minute timeout
             response.raise_for_status()
-            with open(dataset_path, 'w', encoding='utf-8') as f:
+            with open(dataset_path, "w", encoding="utf-8") as f:
                 f.write(response.text)
         except Exception as e:
             raise RuntimeError(f"Failed to download dataset: {e}")
         if not os.path.exists(dataset_path):
             raise FileNotFoundError(f"Failed to download dataset file: {dataset_path}")
     return dataset_path
+
 
 def evaluate(difficulty, agent):
     # Map difficulty to dataset and output file
@@ -97,7 +102,11 @@ def evaluate(difficulty, agent):
         "hard": "my_predictions_m_cleaned.jsonl",
     }
     output_path = output_file_map[difficulty]
-    asyncio.run(generate_answers_with_agent(agent, dataset_path=dataset_path, output_path=output_path))
+    asyncio.run(
+        generate_answers_with_agent(
+            agent, dataset_path=dataset_path, output_path=output_path
+        )
+    )
 
     # The evaluation script expects to be run from the src/evaluation directory
     eval_dir = os.path.join(os.path.dirname(__file__), "src/evaluation")
@@ -112,20 +121,24 @@ def evaluate(difficulty, agent):
     model_name = "gpt-4o"
     print(f"\nRunning evaluation for {difficulty} set...")
     try:
-        subprocess.run([
-            sys.executable, "evaluate_qa.py", model_name, f"../../{output_path}", gold_file
-        ], cwd=eval_dir, check=True)
+        subprocess.run(
+            [
+                sys.executable,
+                "evaluate_qa.py",
+                model_name,
+                f"../../{output_path}",
+                gold_file,
+            ],
+            cwd=eval_dir,
+            check=True,
+        )
     except Exception as e:
         print(f"Evaluation failed: {e}")
 
 
 if __name__ == "__main__":
     from memory_agents.core.agents.baseline import BaselineAgent
+
     difficulty = LONGMEMEVAL_DIFFICIULTY_LEVEL  # Set difficulty here: "easy", "medium", or "hard"
     agent = BaselineAgent()
     evaluate(difficulty, agent)
-
-    
-
-
-

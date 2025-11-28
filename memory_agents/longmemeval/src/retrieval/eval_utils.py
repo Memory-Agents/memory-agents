@@ -5,8 +5,10 @@ def dcg(relevances, k):
     """Discounted Cumulative Gain at k."""
     relevances = np.asfarray(relevances)[:k]
     if relevances.size:
-        return relevances[0] + np.sum(relevances[1:] / np.log2(np.arange(2, relevances.size + 1)))
-    return 0.
+        return relevances[0] + np.sum(
+            relevances[1:] / np.log2(np.arange(2, relevances.size + 1))
+        )
+    return 0.0
 
 
 def ndcg(rankings, correct_docs, corpus_ids, k=10):
@@ -17,7 +19,7 @@ def ndcg(rankings, correct_docs, corpus_ids, k=10):
     ideal_dcg = dcg(ideal_relevance, k)
     actual_dcg = dcg(sorted_relevances, k)
     if ideal_dcg == 0:
-        return 0.
+        return 0.0
     return actual_dcg / ideal_dcg
 
 
@@ -32,7 +34,8 @@ def evaluate_retrieval(rankings, correct_docs, corpus_ids, k=10):
 def evaluate_retrieval_turn2session(rankings, correct_docs, corpus_ids, k=10):
     # convert turn-level labels/results into session-level and then evaluate
     def strip_turn_id(docid):
-        return '_'.join(docid.split('_')[:-1])
+        return "_".join(docid.split("_")[:-1])
+
     correct_docs = list(set([strip_turn_id(x) for x in correct_docs]))
 
     # revise k to handle document-level retrieval
@@ -44,4 +47,3 @@ def evaluate_retrieval_turn2session(rankings, correct_docs, corpus_ids, k=10):
         unique_docids = set(corpus_ids[idx] for idx in rankings[:effective_k])
 
     return evaluate_retrieval(rankings, correct_docs, corpus_ids, k=effective_k)
-
