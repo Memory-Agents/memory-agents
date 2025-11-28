@@ -9,6 +9,7 @@ The memory agents backend includes the LongMemEval benchmark: https://github.com
 ## Setup
 
 #### Requirements
+
 - Docker
 - Python (for executing script)
 - `uv`: https://docs.astral.sh/uv/
@@ -24,7 +25,6 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 # On Windows.
 powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
 ```
-
 
 #### Step 2: Install dependencies
 
@@ -119,5 +119,5 @@ ruff check --fix
 
 ```
 cd memory_agents
-pytest .
+uv run pytest .
 ```
