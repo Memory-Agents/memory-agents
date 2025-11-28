@@ -19,7 +19,7 @@ async def test_query_baseline_agent():
 
 
 @pytest.mark.asyncio
-async def test_query_graphiti_agent_code():
+async def test_query_graphiti_agent():
     from memory_agents.core.agents.graphiti import GraphitiAgent
 
     graphiti_agent = await GraphitiAgent.create()
@@ -30,7 +30,7 @@ async def test_query_graphiti_agent_code():
 
 
 @pytest.mark.asyncio
-async def test_query_baseline_vdb_agent_code():
+async def test_query_baseline_vdb_agent():
     from memory_agents.core.agents.baseline_vdb import BaselineAgent
 
     baseline_vdb_agent = BaselineAgent()
@@ -41,7 +41,7 @@ async def test_query_baseline_vdb_agent_code():
 
 
 @pytest.mark.asyncio
-async def test_query_graphiti_vbd_agent_code():
+async def test_query_graphiti_vbd_agent():
     from memory_agents.core.agents.graphiti_vdb import GraphitiChromaDBAgent
 
     graphiti_vbd_agent = await GraphitiChromaDBAgent.create()

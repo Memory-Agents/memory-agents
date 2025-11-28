@@ -199,20 +199,20 @@ for x in haystack_source_sessions_user_raw:
     elif "session_1" in x and "session_2" in x:
         out_entry = deepcopy(x)
         out_entry["session"] = x["session_1"]
-        out_entry["session_id"] += f"_1"
+        out_entry["session_id"] += "_1"
         haystack_source_sessions_user_all.append(out_entry)
         out_entry = deepcopy(x)
         out_entry["session"] = x["session_2"]
-        out_entry["session_id"] += f"_2"
+        out_entry["session_id"] += "_2"
         haystack_source_sessions_user_all.append(out_entry)
     elif "old_session" in x and "new_session" in x:
         out_entry = deepcopy(x)
         out_entry["session"] = x["old_session"]
-        out_entry["session_id"] += f"_1"
+        out_entry["session_id"] += "_1"
         haystack_source_sessions_user_all.append(out_entry)
         out_entry = deepcopy(x)
         out_entry["session"] = x["new_session"]
-        out_entry["session_id"] += f"_2"
+        out_entry["session_id"] += "_2"
         haystack_source_sessions_user_all.append(out_entry)
 
 haystack_source_sessions_sharegpt = [
