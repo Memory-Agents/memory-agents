@@ -122,8 +122,7 @@ cd memory_agents
 This is the simplest way to run a script.
 
 ```bash
-# Example: running the main entry point
-uv run python main.py
+uv run pytest tests/agent_query_test.py::test_query_graphiti_agent
 ```
 
 #### Option B: Activating the virtual environment
@@ -134,7 +133,7 @@ If you prefer to work inside the virtual environment's shell:
 source .venv/bin/activate
 
 # Now you can run python scripts directly
-python main.py
+uv run pytest tests/agent_query_test.py::test_query_graphiti_agent
 
 # Deactivate when you're done
 deactivate
@@ -190,18 +189,18 @@ deactivate
 
 ```
 cd memory_agents
-ruff format .
+uv run ruff format .
 ```
 
 ```
 cd memory_agents
-ruff check .
-ruff check --fix
+uv run ruff check .
+uv run ruff check --fix
 ```
 
 ## Run PyTest tests
 
 ```
 cd memory_agents
-pytest .
+uv run pytest .
 ```
