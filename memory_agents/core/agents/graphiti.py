@@ -1,10 +1,16 @@
 from typing import Any, Self
 from langchain.agents import create_agent
 from langgraph.checkpoint.memory import InMemorySaver
-from langchain.agents.middleware import before_model, after_model, AgentState, AgentMiddleware
+from langchain.agents.middleware import (
+    before_model,
+    after_model,
+    AgentState,
+    AgentMiddleware,
+)
 from langgraph.runtime import Runtime
 from langchain_mcp_adapters.client import MultiServerMCPClient
 
+from memory_agents.core.agents.graphiti_base_agent import GraphitiBaseAgent
 from memory_agents.core.config import BASELINE_MODEL_NAME, GRAPHITI_MCP_URL
 
 GRAPHITI_SYSTEM_PROMPT = """You are a memory-retrieval agent that uses the Graphiti MCP tools to support the user.
@@ -106,11 +112,11 @@ Do not hallucinate memory. Only use information returned by Graphiti.
 
 class GraphitiAgentMiddleware(AgentMiddleware):
     """Middleware that inserts user messages into Graphiti AFTER the LLM response"""
-    
+
     def __init__(self):
         super().__init__()
         self.pending_user_message = None
-    
+
     @before_model
     def capture_user_message(
         self, state: AgentState, runtime: Runtime
@@ -120,7 +126,7 @@ class GraphitiAgentMiddleware(AgentMiddleware):
         if user_message:
             self.pending_user_message = user_message.content
         return None
-    
+
     @after_model
     def insert_user_message_into_graphiti(
         self, state: AgentState, runtime: Runtime
@@ -136,7 +142,7 @@ class GraphitiAgentMiddleware(AgentMiddleware):
         return None
 
 
-class GraphitiAgent:
+class GraphitiAgent(GraphitiBaseAgent):
     def __init__(self):
         self.agent = None
 
@@ -152,15 +158,3 @@ class GraphitiAgent:
             middleware=[GraphitiAgentMiddleware()],
         )
         return self
-
-    async def _get_graphiti_mcp_tools(self) -> Any:
-        client = MultiServerMCPClient(
-            {
-                "graphiti": {
-                    "transport": "streamable_http",  # HTTP-based remote server
-                    "url": GRAPHITI_MCP_URL,
-                }
-            }
-        )
-
-        return await client.get_tools()
