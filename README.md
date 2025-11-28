@@ -76,6 +76,30 @@ As an alternative to using `.env` files, you can export the variables directly i
 export OPENAI_API_KEY="your-api-key-here"
 ```
 
+### Step 4: Configure Langfuse (Optional)
+
+If you want to use Langfuse for tracing, you need to configure it after starting the services for the first time.
+
+1.  **Open Langfuse:** Once the services are running (see "How to run"), open your web browser and navigate to `http://localhost:3002`.
+2.  **Sign Up:** Create a new account. The first user to sign up will become the administrator.
+3.  **Create an Organization and Project:**
+    *   After logging in, you'll be prompted to create a new **organization**.
+    *   Once the organization is created, create a new **project**.
+4.  **Get API Keys:**
+    *   Navigate to your project's settings.
+    *   Go to the "API Keys" section.
+    *   You will find your `Secret Key` and `Public Key`.
+5.  **Update your environment file:**
+    *   Copy the keys from the Langfuse interface.
+    *   Paste them into your `memory_agents/.env` file. The `LANGFUSE_BASE_URL` should already be set correctly.
+
+    ```
+    # memory_agents/.env
+    LANGFUSE_SECRET_KEY=your_langfuse_secret_key_here
+    LANGFUSE_PUBLIC_KEY=your_langfuse_public_key_here
+    LANGFUSE_BASE_URL="http://localhost:3002"
+    ```
+
 #### Service ports
 
 The `docker-compose.yml` in the root directory defines and orchestrates several services. Once `docker compose up -d` is executed, these services will be accessible via the following ports:
