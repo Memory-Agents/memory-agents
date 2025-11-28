@@ -6,7 +6,7 @@
 
 ```bash
 cd /memory_agents/longmemeval
-uv run answerGeneration.py
+uv run answer_generation_and_evaluation.py
 ```
 
 ## 3. Check the results
