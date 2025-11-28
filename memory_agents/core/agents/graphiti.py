@@ -35,7 +35,7 @@ Your job is to solve the user's tasks by:
 You may use only these retrieval tools:
 
 * `search_nodes`
-* `search_facts`
+* `search_memory_facts`
 * `get_episodes`
 * `get_entity_edge`
 * `get_status` (only for diagnosing server issues when needed)
@@ -73,7 +73,7 @@ Use `get_episodes`.
 Use `search_nodes`.
 
 **3. For relationships, attributes, or structured knowledge:**
-Use `search_facts`.
+Use `search_memory_facts`.
 
 **4. For details about a specific fact or relationship:**
 Use `get_entity_edge`.
