@@ -1,10 +1,11 @@
 import asyncio
 import json
 import os
+import subprocess
 import sys
 from pathlib import Path
 from typing import Any
-
+import requests
 from dotenv import load_dotenv
 
 # Add the workspace root to Python path for absolute imports
@@ -14,6 +15,9 @@ sys.path.insert(0, str(workspace_root))
 
 # Load environment variables from .env file
 load_dotenv()
+
+# Import config
+from memory_agents.config import LONGMEMEVAL_URL_MAP
 
 async def generate_answers_with_agent(
     agent: Any,
@@ -114,23 +118,18 @@ def _getDatasetPath(difficulty: str) -> str:
 def getDatasetPathWithCheck(difficulty: str) -> str:
     dataset_path = _getDatasetPath(difficulty)
     if not os.path.exists(dataset_path):
-        # Map difficulty to download URL
-        url_map = {
-            "easy": "https://huggingface.co/datasets/xiaowu0162/longmemeval-cleaned/resolve/main/longmemeval_oracle.json",
-            "medium": "https://huggingface.co/datasets/xiaowu0162/longmemeval-cleaned/resolve/main/longmemeval_s_cleaned.json",
-            "hard": "https://huggingface.co/datasets/xiaowu0162/longmemeval-cleaned/resolve/main/longmemeval_m_cleaned.json",
-        }
-        url = url_map.get(difficulty)
+        # Get URL from config
+        url = LONGMEMEVAL_URL_MAP.get(difficulty)
         if url is None:
             raise ValueError(f"Invalid difficulty: {difficulty}")
         # Ensure the data directory exists
         os.makedirs(os.path.dirname(dataset_path), exist_ok=True)
         print(f"Dataset file not found: {dataset_path}\nDownloading from {url} ...")
-        import subprocess
         try:
-            subprocess.run([
-                "wget", url, "-O", dataset_path
-            ], check=True)
+            response = requests.get(url, timeout=300)  # 5 minute timeout
+            response.raise_for_status()
+            with open(dataset_path, 'w', encoding='utf-8') as f:
+                f.write(response.text)
         except Exception as e:
             raise RuntimeError(f"Failed to download dataset: {e}")
         if not os.path.exists(dataset_path):
@@ -160,7 +159,6 @@ def evaluate(difficulty, agent):
     # Model name can be changed as needed
     model_name = "gpt-4o"
     print(f"\nRunning evaluation for {difficulty} set...")
-    import sys
     try:
         subprocess.run([
             sys.executable, "evaluate_qa.py", model_name, f"../../{output_path}", gold_file
@@ -170,7 +168,6 @@ def evaluate(difficulty, agent):
 
 
 if __name__ == "__main__":
-    import subprocess
     from memory_agents.core.agents.baseline import BaselineAgent
     difficulty = "easy"  # Set difficulty here: "easy", "medium", or "hard"
     agent = BaselineAgent()
