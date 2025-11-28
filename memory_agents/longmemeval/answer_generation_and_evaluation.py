@@ -8,18 +8,16 @@ from typing import Any
 import requests
 from dotenv import load_dotenv
 
-from memory_agents.core.run_agent import run_agent_messages
-
 # Add the workspace root to Python path for absolute imports
 # answer_generation_and_evaluation.py -> longmemeval -> memory_agents -> workspace_root
 workspace_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(workspace_root))
 
+from memory_agents.core.run_agent import run_agent_messages
+from memory_agents.config import LONGMEMEVAL_DIFFICIULTY_LEVEL, LONGMEMEVAL_URL_MAP
+
 # Load environment variables from .env file
 load_dotenv()
-
-# Import config
-from memory_agents.config import LONGMEMEVAL_DIFFICIULTY_LEVEL, LONGMEMEVAL_URL_MAP
 
 
 async def generate_answers_with_agent(
