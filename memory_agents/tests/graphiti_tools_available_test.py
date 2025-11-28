@@ -25,7 +25,6 @@ async def test_graphiti_tools_available():
 
     tools = await agent._get_graphiti_mcp_tools()
 
-    print([tool.name for tool in tools])
     tool_names = {tool.name for tool in tools}
 
     # --- Ensure disallowed tools are not present ---
