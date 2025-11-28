@@ -8,6 +8,8 @@ from typing import Any
 import requests
 from dotenv import load_dotenv
 
+from memory_agents.core.run_agent import run_agent_messages
+
 # Add the workspace root to Python path for absolute imports
 # answer_generation_and_evaluation.py -> longmemeval -> memory_agents -> workspace_root
 workspace_root = Path(__file__).parent.parent.parent
