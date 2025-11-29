@@ -183,8 +183,22 @@ def evaluate(difficulty, agent):
 
 
 if __name__ == "__main__":
+    import argparse
     from memory_agents.core.agents.baseline import BaselineAgent
+    from memory_agents.core.agents.graphiti import GraphitiAgent
+    from memory_agents.core.agents.graphiti_vdb import GraphitiChromaDBAgent
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--agent", type=str, default="baseline", choices=["baseline", "graphiti", "graphiti_vdb"])
+    args = parser.parse_args()
 
     difficulty = LONGMEMEVAL_DIFFICIULTY_LEVEL  # Set difficulty here: "easy", "medium", or "hard"
-    agent = BaselineAgent()
+    if args.agent == "baseline":
+        agent = BaselineAgent()
+    elif args.agent == "graphiti":
+        agent = asyncio.run(GraphitiAgent().create())
+    elif args.agent == "graphiti_vdb":
+        agent = asyncio.run(GraphitiChromaDBAgent().create())
+    else:
+        raise ValueError(f"Invalid agent: {args.agent}")
     evaluate(difficulty, agent)
