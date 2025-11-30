@@ -53,7 +53,7 @@ jobs:
         working-directory: .
 
       - name: Wait for services to start
-        run: docker compose -f docker-compose-workflow.yml wait
+        run: docker compose -f docker-compose-workflow.yml wait graphiti
         timeout-minutes: 10
 
       - name: Evaluate Baseline+Graphiti+VDB
