@@ -49,7 +49,7 @@ jobs:
         working-directory: .
 
       - name: Install Docker
-        run: brew install docker-compose
+        run: brew install docker
         working-directory: .
 
       - name: Run Docker
