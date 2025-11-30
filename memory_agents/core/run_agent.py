@@ -17,6 +17,7 @@ try:
         logger.info("Langfuse client is authenticated and ready!")
     else:
         logger.error("Langfuse client authentication failed.")
+        raise Exception("Langfuse client authentication failed.")
 
     langfuse_handler = CallbackHandler()
 except:
