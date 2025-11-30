@@ -35,6 +35,18 @@ jobs:
         run: uv sync --all-groups
         working-directory: memory_agents
 
+      - name: Install Docker
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y docker.io
+          sudo systemctl start docker
+          sudo systemctl enable docker
+          docker compose up
+        working-directory: .
+
+      - name: Wait for Docker to start
+        run: sleep 10
+
       - name: Evaluate Baseline+Graphiti+VDB
         run: uv run answer_generation_and_evaluation.py --agent graphiti_vdb
         working-directory: memory_agents/longmemeval
