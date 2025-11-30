@@ -28,27 +28,27 @@ services:
       file: ./graphiti/mcp_server/docker/docker-compose.yml
       service: graphiti-falkordb
 
-  langfuse-worker:
-    extends:
-      file: ./langfuse/docker-compose.yml
-      service: langfuse-worker
-  langfuse-web:
-    extends:
-      file: ./langfuse/docker-compose.yml
-      service: langfuse-web
-  clickhouse:
-    extends:
-      file: ./langfuse/docker-compose.yml
-      service: clickhouse
-  minio:
-    extends:
-      file: ./langfuse/docker-compose.yml
-      service: minio
-  postgres:
-    extends:
-      file: ./langfuse/docker-compose.yml
-      service: postgres
-  redis:
-    extends:
-      file: ./langfuse/docker-compose.yml
-      service: redis
+  # langfuse-worker:
+  #   extends:
+  #     file: ./langfuse/docker-compose.yml
+  #     service: langfuse-worker
+  # langfuse-web:
+  #   extends:
+  #     file: ./langfuse/docker-compose.yml
+  #     service: langfuse-web
+  # clickhouse:
+  #   extends:
+  #     file: ./langfuse/docker-compose.yml
+  #     service: clickhouse
+  # minio:
+  #   extends:
+  #     file: ./langfuse/docker-compose.yml
+  #     service: minio
+  # postgres:
+  #   extends:
+  #     file: ./langfuse/docker-compose.yml
+  #     service: postgres
+  # redis:
+  #   extends:
+  #     file: ./langfuse/docker-compose.yml
+  #     service: redis
