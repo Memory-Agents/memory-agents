@@ -6,19 +6,26 @@ load_dotenv()
 from langfuse import get_client
 from langfuse.langchain import CallbackHandler
 
-# Initialize Langfuse client
-langfuse = get_client()
+try:
+    # Initialize Langfuse client
+    langfuse = get_client()
 
-logger = logging.getLogger()
+    logger = logging.getLogger()
 
-# Verify connection
-if langfuse.auth_check():
-    logger.info("Langfuse client is authenticated and ready!")
-else:
-    logger.error("Langfuse client authentication failed.")
+    # Verify connection
+    if langfuse.auth_check():
+        logger.info("Langfuse client is authenticated and ready!")
+    else:
+        logger.error("Langfuse client authentication failed.")
 
-# Initialize Langfuse CallbackHandler for Langchain (tracing)
-langfuse_handler = CallbackHandler()
+    langfuse_handler = CallbackHandler()
+except:
+    logger.error(
+        "Could not initialize Langfuse, please check if Langfuse is running on correctly."
+    )
+
+    langfuse_handler = None
+    # Initialize Langfuse CallbackHandler for Langchain (tracing)
 
 
 async def run_agent_messages(
@@ -28,6 +35,7 @@ async def run_agent_messages(
 ) -> str:
     """
     Run an OpenAI LangChain agent with a full messages history.
+    Build configuration with Langfuse callback handler if available.
 
     Args:
         agent: The LangChain agent instance.
@@ -41,7 +49,10 @@ async def run_agent_messages(
     input_data = {"messages": messages}
     response = agent.invoke(
         input_data,
-        {"configurable": {"thread_id": thread_id}, "callbacks": [langfuse_handler]},
+        {
+            "configurable": {"thread_id": thread_id},
+            "callbacks": [langfuse_handler] if langfuse_handler else [],
+        },
     )
     return extract_response_content(response)
 
@@ -61,7 +72,10 @@ async def run_agent(agent, message: str, thread_id: str) -> str:
     input_data = {"messages": [{"role": "user", "content": message}]}
     response = agent.invoke(
         input_data,
-        {"configurable": {"thread_id": thread_id}, "callbacks": [langfuse_handler]},
+        {
+            "configurable": {"thread_id": thread_id},
+            "callbacks": [langfuse_handler] if langfuse_handler else [],
+        },
     )
     return extract_response_content(response)
 
