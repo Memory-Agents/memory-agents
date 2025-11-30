@@ -19,7 +19,6 @@ env:
   MINIO_ROOT_PASSWORD: super-secret-key-2
   LANGFUSE_SALT: super-secret-key-3
   NEXTAUTH_SECRET: super-secret-key-4
-  ENCRYPTION_KEY: 0c563cdb3d05e5e995b4c06951369e8f1732019ce59b2710848140e3f7f4368d
 
 defaults:
   run:
@@ -40,6 +39,14 @@ jobs:
       - name: Install Dependencies
         run: uv sync --all-groups
         working-directory: memory_agents
+
+      - name: Generate Encryption Key
+        run: openssl rand -hex 32 > encryption_key.txt
+        working-directory: .
+
+      - name: Set Encryption Key
+        run: export ENCRYPTION_KEY=$(cat encryption_key.txt)
+        working-directory: .
 
       - name: Run Docker
         run: docker compose -f docker-compose-workflow.yml up -d
