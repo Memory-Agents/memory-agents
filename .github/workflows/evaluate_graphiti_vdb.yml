@@ -35,13 +35,8 @@ jobs:
         run: uv sync --all-groups
         working-directory: memory_agents
 
-      - name: Install Docker
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y docker.io
-          sudo systemctl start docker
-          sudo systemctl enable docker
-          docker compose up
+      - name: Run Docker
+        run: docker compose up
         working-directory: .
 
       - name: Wait for Docker to start
