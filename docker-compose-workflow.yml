@@ -12,43 +12,43 @@ volumes:
   langfuse_minio_data:
 
 services:
-  # open-webui:
-  #   image: ghcr.io/open-webui/open-webui:main
-  #   restart: unless-stopped
-  #   container_name: open-webui
-  #   expose:
-  #     - 8080/tcp
-  #   extra_hosts:
-  #     - "host.docker.internal:host-gateway"
-  #   volumes:
-  #     - open-webui:/app/backend/data
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:main
+    restart: unless-stopped
+    container_name: open-webui
+    expose:
+      - 8080/tcp
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - open-webui:/app/backend/data
 
   graphiti:
     extends:
       file: ./graphiti/mcp_server/docker/docker-compose.yml
       service: graphiti-falkordb
 
-  # langfuse-worker:
-  #   extends:
-  #     file: ./langfuse/docker-compose.yml
-  #     service: langfuse-worker
-  # langfuse-web:
-  #   extends:
-  #     file: ./langfuse/docker-compose.yml
-  #     service: langfuse-web
-  # clickhouse:
-  #   extends:
-  #     file: ./langfuse/docker-compose.yml
-  #     service: clickhouse
-  # minio:
-  #   extends:
-  #     file: ./langfuse/docker-compose.yml
-  #     service: minio
-  # postgres:
-  #   extends:
-  #     file: ./langfuse/docker-compose.yml
-  #     service: postgres
-  # redis:
-  #   extends:
-  #     file: ./langfuse/docker-compose.yml
-  #     service: redis
+  langfuse-worker:
+    extends:
+      file: ./langfuse/docker-compose.yml
+      service: langfuse-worker
+  langfuse-web:
+    extends:
+      file: ./langfuse/docker-compose.yml
+      service: langfuse-web
+  clickhouse:
+    extends:
+      file: ./langfuse/docker-compose.yml
+      service: clickhouse
+  minio:
+    extends:
+      file: ./langfuse/docker-compose.yml
+      service: minio
+  postgres:
+    extends:
+      file: ./langfuse/docker-compose.yml
+      service: postgres
+  redis:
+    extends:
+      file: ./langfuse/docker-compose.yml
+      service: redis
