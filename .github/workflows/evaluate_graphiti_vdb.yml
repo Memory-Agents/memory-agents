@@ -48,6 +48,10 @@ jobs:
         run: export ENCRYPTION_KEY=$(cat encryption_key.txt)
         working-directory: .
 
+      - name: Install Docker
+        run: brew install docker
+        working-directory: .
+
       - name: Run Docker
         run: docker compose -f docker-compose-workflow.yml up -d
         working-directory: .
