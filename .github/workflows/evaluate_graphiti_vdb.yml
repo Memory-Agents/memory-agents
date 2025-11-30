@@ -36,7 +36,7 @@ jobs:
         working-directory: memory_agents
 
       - name: Run Docker
-        run: docker compose up -d
+        run: docker compose -f docker-compose-workflow.yml up -d
         working-directory: .
 
       - name: Wait for Docker to start
