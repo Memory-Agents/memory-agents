@@ -7,6 +7,8 @@ from langchain.agents.middleware import (
     AgentState,
     AgentMiddleware,
 )
+from langchain_community.document_compressors import FlashrankRerank
+from langchain_core.documents import Document
 from langgraph.runtime import Runtime
 import chromadb
 from chromadb.config import Settings
@@ -114,6 +116,7 @@ class RAGEnhancedAgentMiddleware(AgentMiddleware):
     def __init__(self, chroma_manager: ChromaDBManager):
         super().__init__()
         self.chroma_manager = chroma_manager
+        self.reranker = FlashrankRerank(top_n=5)
 
     @before_model
     def inject_chromadb_context(
@@ -127,20 +130,30 @@ class RAGEnhancedAgentMiddleware(AgentMiddleware):
 
         # Search in ChromaDB (automatically excludes current message)
         similar_conversations = self.chroma_manager.search_conversations(
-            query, n_results=5
+            query, n_results=20
         )
+
+        if not similar_conversations:
+            return None
+
+        docs_to_rerank = [
+            Document(page_content=d["content"], metadata=d["metadata"])
+            for d in similar_conversations
+        ]
+
+        reranked_docs = self.reranker.compress_documents(docs_to_rerank, query)
 
         # Build enriched context
         rag_context = ""
 
-        if similar_conversations:
+        if reranked_docs:
             rag_context += "\n--- Similar Past Conversations ---\n"
-            for i, conv in enumerate(similar_conversations, 1):
-                similarity = 1 - conv["distance"] if conv["distance"] else 0
-                if similarity > 0.5:  # Relevance threshold
-                    timestamp = conv["metadata"].get("timestamp", "unknown")
-                    rag_context += f"\n[Conversation {i}] (similarity: {similarity:.2f}, date: {timestamp}):\n"
-                    rag_context += f"{conv['content']}\n"
+            for i, doc in enumerate(reranked_docs, 1):
+                relevance_score = doc.metadata.get("relevance_score", 0)
+                if relevance_score > 0.5:  # Relevance threshold
+                    timestamp = doc.metadata.get("timestamp", "unknown")
+                    rag_context += f"\n[Conversation {i}] (relevance: {relevance_score:.2f}, date: {timestamp}):\n"
+                    rag_context += f"{doc.page_content}\n"
 
         # Inject context if relevant
         if rag_context:
