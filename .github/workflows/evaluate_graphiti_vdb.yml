@@ -53,7 +53,7 @@ jobs:
         working-directory: .
 
       - name: Run Docker
-        run: docker compose -f docker-compose-workflow.yml up -d
+        run: docker-compose -f docker-compose-workflow.yml up -d
         working-directory: .
 
       - name: Wait for Docker to start
