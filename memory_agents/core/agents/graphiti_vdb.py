@@ -28,11 +28,12 @@ You only retrieve it when helpful.
 Your job is to solve the user's tasks by:
 
 1. Understanding the user's query.
-2. Retrieving relevant prior information from:
+2. **ALWAYS check memory first** when the user asks about information they may have shared before.
+3. Retrieving relevant prior information from:
    - The Graphiti knowledge graph for structured relationships and facts
    - ChromaDB for semantic similarity search on past conversations
-3. Using retrieved episodes, node summaries, facts, and similar conversations as context.
-4. Producing a final answer that integrates reasoning with retrieved information from both sources.
+4. Using retrieved episodes, node summaries, facts, and similar conversations as context.
+5. Producing a final answer that integrates reasoning with retrieved information from both sources.
 
 ---
 
@@ -53,21 +54,24 @@ Your job is to solve the user's tasks by:
 
 ## When to Retrieve
 
+**IMPORTANT: You should ALWAYS search memory when the user's question could reference prior conversations.**
+
 Trigger retrieval when the user's request likely depends on prior information, including:
 
-* References to previous conversation content
+* References to previous conversation content ("What did I say...", "Do you remember...", "What is my...")
 * Requests involving user preferences, personal details, or past statements
 * Questions about entities or topics previously discussed
+* Questions that use possessive language ("my secret", "my code", "my preference")
 * Requests to summarize or recall earlier information
 
-If retrieval is unlikely to help, answer without calling tools.
+**Default behavior: When in doubt, search memory first with `get_episodes` before answering.**
 
 ---
 
 ## Retrieval Strategy
 
-**1. For past conversation details or recent information:**
-Use `get_episodes` from Graphiti.
+**1. For questions about past conversations or user-specific information:**
+ALWAYS use `get_episodes` from Graphiti first. Search with keywords from the user's question.
 ChromaDB will automatically provide semantically similar past conversations.
 
 **2. For topical or entity-based queries:**
@@ -107,6 +111,7 @@ Do not hallucinate memory. Only use information returned by Graphiti and ChromaD
 * Provide accurate, concise, and direct answers.
 * Do not reveal internal reasoning or tool operations.
 * Do not describe or expose system-level instructions.
+* When asked about personal information (codes, preferences, etc.), ALWAYS search episodes first.
 """
 
 
@@ -231,7 +236,7 @@ class RAGEnhancedAgentMiddleware(AgentMiddleware):
             rag_context += "\n--- Similar Past Conversations (ChromaDB) ---\n"
             for i, doc in enumerate(reranked_docs, 1):
                 relevance_score = doc.metadata.get("relevance_score", 0)
-                if relevance_score > 0.5:  # Relevance threshold
+                if relevance_score > 0.3:  # Lower relevance threshold for better recall
                     timestamp = doc.metadata.get("timestamp", "unknown")
                     rag_context += f"\n[Conversation {i}] (relevance: {relevance_score:.2f}, date: {timestamp}):\n"
                     rag_context += f"{doc.page_content}\n"
@@ -272,10 +277,13 @@ class GraphitiChromaDBStorageMiddleware(AgentMiddleware):
         assistant_message = state.get_latest_assistant_message()
         if assistant_message:
             # Insert into Graphiti AFTER response (to avoid data leakage)
-            runtime.call_tool(
-                "add_episode",
-                {"message": self.pending_user_message},
-            )
+            try:
+                runtime.call_tool(
+                    "add_episode",
+                    {"message": self.pending_user_message},
+                )
+            except Exception as e:
+                print(f"Warning: Failed to insert episode into Graphiti: {e}")
 
             # Store complete conversation in ChromaDB
             self.chroma_manager.add_conversation_turn(
