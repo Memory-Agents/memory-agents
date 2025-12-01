@@ -8,10 +8,9 @@ from langchain.agents.middleware import (
     AgentMiddleware,
 )
 from langgraph.runtime import Runtime
-from langchain_mcp_adapters.client import MultiServerMCPClient
 
 from memory_agents.core.agents.graphiti_base_agent import GraphitiBaseAgent
-from memory_agents.config import BASELINE_MODEL_NAME, GRAPHITI_MCP_URL
+from memory_agents.config import BASELINE_MODEL_NAME
 
 GRAPHITI_SYSTEM_PROMPT = """You are a memory-retrieval agent that uses the Graphiti MCP tools to support the user.
 Episodes are automatically inserted by middleware.

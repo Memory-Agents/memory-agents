@@ -1,3 +1,7 @@
+baseline_chroma_memory_db/
+graphiti_vdb_chroma_memory_db/
+test_chroma_db/
+
 .env
 volumes/
 neo4j/

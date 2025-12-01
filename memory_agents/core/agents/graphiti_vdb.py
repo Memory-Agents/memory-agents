@@ -10,13 +10,12 @@ from langchain.agents.middleware import (
 from langchain_community.document_compressors import FlashrankRerank
 from langchain_core.documents import Document
 from langgraph.runtime import Runtime
-from langchain_mcp_adapters.client import MultiServerMCPClient
 import chromadb
 from chromadb.config import Settings
 from datetime import datetime
 
 from memory_agents.core.agents.graphiti_base_agent import GraphitiBaseAgent
-from memory_agents.core.config import BASELINE_MODEL_NAME, GRAPHITI_MCP_URL
+from memory_agents.core.config import BASELINE_MODEL_NAME
 
 GRAPHITI_CHROMADB_SYSTEM_PROMPT = """You are a memory-retrieval agent that uses both Graphiti MCP tools and ChromaDB RAG to support the user.
 Episodes and conversation history are automatically inserted by middleware into both Graphiti and ChromaDB.
