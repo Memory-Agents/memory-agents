@@ -150,7 +150,7 @@ class RAGEnhancedAgentMiddleware(AgentMiddleware):
             rag_context += "\n--- Similar Past Conversations ---\n"
             for i, doc in enumerate(reranked_docs, 1):
                 relevance_score = doc.metadata.get("relevance_score", 0)
-                if relevance_score > 0.5:  # Relevance threshold
+                if relevance_score > 0.3:  # Lower relevance threshold for better recall
                     timestamp = doc.metadata.get("timestamp", "unknown")
                     rag_context += f"\n[Conversation {i}] (relevance: {relevance_score:.2f}, date: {timestamp}):\n"
                     rag_context += f"{doc.page_content}\n"
@@ -246,8 +246,6 @@ class BaselineAgent:
         return self.chroma_manager.search_conversations(query, n_results)
 
 
-"""
-
 # Usage example
 def main():
     # Create baseline agent with ChromaDB
@@ -268,4 +266,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()"""
+    main()
