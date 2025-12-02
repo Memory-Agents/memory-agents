@@ -188,7 +188,15 @@ class ChromaDBStorageMiddleware(AgentMiddleware):
         if not self.pending_user_message:
             return None
 
-        assistant_message = state.get_latest_assistant_message()
+        # Get the latest assistant message
+        messages = state.get("messages", [])
+        assistant_message = None
+        for msg in reversed(messages):
+            print(msg.type)
+            if hasattr(msg, "type") and msg.type == "ai":
+                assistant_message = msg
+                break
+
         if assistant_message:
             # Store complete conversation in ChromaDB
             self.chroma_manager.add_conversation_turn(
