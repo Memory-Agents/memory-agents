@@ -16,3 +16,4 @@ services:
       - NEO4J_USER
       - NEO4J_PASSWORD
       - SEMAPHORE_LIMIT
+      - MODEL_NAME
