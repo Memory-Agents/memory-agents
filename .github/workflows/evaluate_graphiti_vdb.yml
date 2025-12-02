@@ -54,15 +54,10 @@ jobs:
         working-directory: .
 
       - name: Wait for services to start
-        run: docker compose -f docker-compose-workflow.yml wait graphiti
-        timeout-minutes: 10
-
-      - name: Failure Logs
-        if: failure()
         run: |
-          docker compose -f docker-compose-workflow.yml logs graphiti
-          docker events --filter container=graphiti
-          docker inspect graphiti
+          until [ "$(docker inspect -f '{{.State.Health.Status}}' graphiti)" = "healthy" ]; do
+            sleep 1
+          done
 
       - name: Evaluate Baseline+Graphiti+VDB
         run: uv run answer_generation_and_evaluation.py --agent graphiti_vdb
