@@ -58,6 +58,7 @@ jobs:
         timeout-minutes: 10
 
       - name: Failure Logs
+        if: failure()
         run: |
           docker compose -f docker-compose-workflow.yml logs graphiti
           docker events --filter container=graphiti
