@@ -36,6 +36,7 @@ def setup_teardown_chroma():
     if os.path.exists(TEST_CHROMADB_DIR):
         shutil.rmtree(TEST_CHROMADB_DIR)
 
+
 @pytest.mark.asyncio
 async def test_memory_baseline_vdb_agent():
     """Test ChromaDB vector memory with RAG - uses middleware for automatic storage"""
@@ -46,12 +47,16 @@ async def test_memory_baseline_vdb_agent():
 
     # 1. Store conversations via middleware
     await run_agent(baseline_vdb_agent.agent, SECRET_CODE, thread_id_1)
-    await run_agent(baseline_vdb_agent.agent, "What is the weather like today?", thread_id_1)
+    await run_agent(
+        baseline_vdb_agent.agent, "What is the weather like today?", thread_id_1
+    )
     await run_agent(baseline_vdb_agent.agent, "Tell me a joke.", thread_id_1)
 
     # 2. Verify storage
     stats = baseline_vdb_agent.get_chromadb_stats()
-    assert stats["total_conversation_turns"] >= 3, f"Expected at least 3 conversations, got {stats['total_conversation_turns']}"
+    assert stats["total_conversation_turns"] >= 3, (
+        f"Expected at least 3 conversations, got {stats['total_conversation_turns']}"
+    )
 
     # 3. Reset InMemory to test ChromaDB-only retrieval
     baseline_vdb_agent.agent = create_agent(
@@ -71,7 +76,8 @@ async def test_memory_baseline_vdb_agent():
     # 5. Verify memory retrieval
     print(f"Expected '{SECRET_ANSWER}' in response but got: {response}")
     assert SECRET_ANSWER.lower() in response.lower()
-   
+
+
 @pytest.mark.asyncio
 async def test_memory_graphiti_agent():
     from memory_agents.core.agents.graphiti import (
@@ -88,12 +94,12 @@ async def test_memory_graphiti_agent():
     # 1. Teach the agent the secret
     print(f"\n📝 Teaching: {SECRET_CODE}")
     await run_agent(graphiti_agent.agent, SECRET_CODE, thread_id_1)
-    
+
     # 2. Have some other conversation
     print("\n💬 Additional conversations...")
     await run_agent(graphiti_agent.agent, "What is the capital of France?", thread_id_1)
     await run_agent(graphiti_agent.agent, "What is 2 + 2?", thread_id_1)
-    
+
     # 3. Reinitialize agent
     graphiti_tools = await graphiti_agent._get_graphiti_mcp_tools()
     graphiti_agent.agent = create_agent(
@@ -113,7 +119,9 @@ async def test_memory_graphiti_agent():
     print(f"💬 Final Response: {response}")
 
     # 5. Assert that the agent remembers the secret
-    assert SECRET_ANSWER.lower() in response.lower(), f"Expected '{SECRET_ANSWER}' but got: {response}"
+    assert SECRET_ANSWER.lower() in response.lower(), (
+        f"Expected '{SECRET_ANSWER}' but got: {response}"
+    )
 
 
 @pytest.mark.asyncio
@@ -138,14 +146,14 @@ async def test_memory_graphiti_vdb_agent():
     # 1. Teach the agent the secret
     print(f"\n📝 Teaching: {SECRET_CODE}")
     await run_agent(graphiti_vdb_agent.agent, SECRET_CODE, thread_id_1)
-    
+
     # 2. Have some other conversation
     print("\n💬 Additional conversations...")
     await run_agent(graphiti_vdb_agent.agent, "Who wrote Hamlet?", thread_id_1)
     await run_agent(
         graphiti_vdb_agent.agent, "What is the color of the sky?", thread_id_1
     )
-    
+
     # ✅ 저장 확인
     stats = graphiti_vdb_agent.get_chromadb_stats()
     print(f"📊 Stats after all messages: {stats}")
@@ -172,9 +180,13 @@ async def test_memory_graphiti_vdb_agent():
     print(f"💬 Final Response: {response}")
 
     # 5. Assert that the agent remembers the secret
-    assert SECRET_ANSWER.lower() in response.lower(), f"Expected '{SECRET_ANSWER}' but got: {response}"
+    assert SECRET_ANSWER.lower() in response.lower(), (
+        f"Expected '{SECRET_ANSWER}' but got: {response}"
+    )
 
     # Optional: check ChromaDB stats
     final_stats = graphiti_vdb_agent.get_chromadb_stats()
     print(f"\n📊 Final stats: {final_stats}")
-    assert final_stats["total_conversation_turns"] >= 3, f"Expected at least 3 turns, but got {final_stats['total_conversation_turns']}"
+    assert final_stats["total_conversation_turns"] >= 3, (
+        f"Expected at least 3 turns, but got {final_stats['total_conversation_turns']}"
+    )

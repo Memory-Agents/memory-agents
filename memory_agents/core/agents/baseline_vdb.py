@@ -126,14 +126,14 @@ class RAGEnhancedAgentMiddleware(AgentMiddleware):
         messages = state.get("messages", [])
         if not messages:
             return None
-        
+
         # Get the latest user message
         user_message = None
         for msg in reversed(messages):
-            if hasattr(msg, 'type') and msg.type == 'human':
+            if hasattr(msg, "type") and msg.type == "human":
                 user_message = msg
                 break
-        
+
         if not user_message:
             return None
 
@@ -191,20 +191,18 @@ class ChromaDBStorageMiddleware(AgentMiddleware):
         messages = state.get("messages", [])
         if not messages:
             return None
-        
+
         # Get the latest user message
         for msg in reversed(messages):
-            if hasattr(msg, 'type') and msg.type == 'human':
+            if hasattr(msg, "type") and msg.type == "human":
                 self.pending_user_message = msg.content
                 break
-        
+
         return None
 
-    def after_model(
-        self, state: AgentState, runtime: Runtime
-    ) -> dict[str, Any] | None:
+    def after_model(self, state: AgentState, runtime: Runtime) -> dict[str, Any] | None:
         """Stores complete conversation turn after model response"""
-        
+
         if not self.pending_user_message:
             return None
 
@@ -212,10 +210,10 @@ class ChromaDBStorageMiddleware(AgentMiddleware):
         messages = state.get("messages", [])
         assistant_message = None
         for msg in reversed(messages):
-            if hasattr(msg, 'type') and msg.type == 'ai':
+            if hasattr(msg, "type") and msg.type == "ai":
                 assistant_message = msg
                 break
-        
+
         if assistant_message:
             # Store complete conversation in ChromaDB
             self.chroma_manager.add_conversation_turn(
@@ -236,30 +234,18 @@ class BaselineAgent:
     """Baseline agent with ChromaDB RAG integration"""
 
     def __init__(self, persist_directory: str = BASELINE_CHROMADB_DIR) -> None:
-        # Initialize ChromaDB
-        print(f"🔧 [BaselineAgent] Initializing with persist_directory: {persist_directory}")
         self.chroma_manager = ChromaDBManager(persist_directory)
 
-        # Create agent with RAG middleware
-        # Order matters:
-        # 1. RAG enriches context BEFORE generation
-        # 2. ChromaDB stores AFTER generation
-        print(f"🔧 [BaselineAgent] Creating agent with middleware...")
-        
-        rag_middleware = RAGEnhancedAgentMiddleware(self.chroma_manager)
-        storage_middleware = ChromaDBStorageMiddleware(self.chroma_manager)
-        
-        print(f"🔧 [BaselineAgent] RAG Middleware: {rag_middleware}")
-        print(f"🔧 [BaselineAgent] Storage Middleware: {storage_middleware}")
-        
         agent = create_agent(
             model=BASELINE_MODEL_NAME,
             system_prompt=BASELINE_CHROMADB_SYSTEM_PROMPT,
             checkpointer=InMemorySaver(),
-            middleware=[rag_middleware, storage_middleware],
+            middleware=[
+                RAGEnhancedAgentMiddleware(self.chroma_manager),
+                ChromaDBStorageMiddleware(self.chroma_manager),
+            ],
         )
         self.agent = agent
-        print(f"🔧 [BaselineAgent] Agent created successfully!")
 
     def get_chromadb_stats(self) -> Dict[str, int]:
         """Returns ChromaDB statistics"""
