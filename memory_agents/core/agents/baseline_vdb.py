@@ -25,7 +25,7 @@ When relevant past conversations are found, they will be included in your contex
 - Maintain continuity across conversations
 - Provide more personalized and contextual responses
 
-You do not need to manage memory yourself - it is handled automatically.
+You do not need to write memory, only read from the according tool, in order ot 
 Focus on helping the user effectively by using the provided context when relevant."""
 
 
@@ -118,8 +118,7 @@ class RAGEnhancedAgentMiddleware(AgentMiddleware):
         self.chroma_manager = chroma_manager
         self.reranker = FlashrankRerank(top_n=5)
 
-    @before_model
-    def inject_chromadb_context(
+    def before_model(
         self, state: AgentState, runtime: Runtime
     ) -> dict[str, Any] | None:
         user_message = state.get_latest_user_message()
@@ -252,17 +251,17 @@ class BaselineAgent:
 def main():
     # Create baseline agent with ChromaDB
     agent = BaselineAgent()
-    
+
     # Display stats
     stats = agent.get_chromadb_stats()
     print(f"ChromaDB Stats: {stats}")
-    
+
     # Example manual search (optional)
     results = agent.search_past_conversations("python programming", n_results=3)
     print(f"\nFound {len(results)} similar conversations")
     for result in results:
         print(f"- {result['metadata'].get('timestamp')}: {result['content'][:100]}...")
-    
+
     # Agent is now ready to use with RAG
     return agent
 

@@ -199,8 +199,7 @@ class RAGEnhancedAgentMiddleware(AgentMiddleware):
         self.chroma_manager = chroma_manager
         self.reranker = FlashrankRerank(top_n=5)
 
-    @before_model
-    def inject_chromadb_context(
+    def before_model(
         self, state: AgentState, runtime: Runtime
     ) -> dict[str, Any] | None:
         user_message = state.get_latest_user_message()
@@ -251,8 +250,7 @@ class GraphitiChromaDBStorageMiddleware(AgentMiddleware):
         self.chroma_manager = chroma_manager
         self.pending_user_message = None
 
-    @before_model
-    def capture_user_message(
+    def before_model(
         self, state: AgentState, runtime: Runtime
     ) -> dict[str, Any] | None:
         """Captures user message to store later"""
@@ -261,10 +259,7 @@ class GraphitiChromaDBStorageMiddleware(AgentMiddleware):
             self.pending_user_message = user_message.content
         return None
 
-    @after_model
-    def store_conversation_turn(
-        self, state: AgentState, runtime: Runtime
-    ) -> dict[str, Any] | None:
+    def after_model(self, state: AgentState, runtime: Runtime) -> dict[str, Any] | None:
         """Stores complete conversation turn in both Graphiti and ChromaDB after model response"""
         if not self.pending_user_message:
             return None

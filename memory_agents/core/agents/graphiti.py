@@ -116,8 +116,7 @@ class GraphitiAgentMiddleware(AgentMiddleware):
         super().__init__()
         self.pending_user_message = None
 
-    @before_model
-    def capture_user_message(
+    def before_model(
         self, state: AgentState, runtime: Runtime
     ) -> dict[str, Any] | None:
         """Captures user message to store later"""
@@ -126,10 +125,7 @@ class GraphitiAgentMiddleware(AgentMiddleware):
             self.pending_user_message = user_message.content
         return None
 
-    @after_model
-    def insert_user_message_into_graphiti(
-        self, state: AgentState, runtime: Runtime
-    ) -> dict[str, Any] | None:
+    def after_model(self, state: AgentState, runtime: Runtime) -> dict[str, Any] | None:
         """Inserts user message into Graphiti after model response (to avoid data leakage)"""
         if self.pending_user_message:
             runtime.call_tool(
