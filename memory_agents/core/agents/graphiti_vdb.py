@@ -298,16 +298,10 @@ class GraphitiChromaDBAgent(GraphitiBaseAgent):
     async def create(cls, persist_directory: str = "./chroma_memory_db") -> Self:
         self = cls()
 
-        # Initialize ChromaDB
         self.chroma_manager = ChromaDBManager(persist_directory)
 
-        # Get Graphiti tools
         graphiti_tools = await self._get_graphiti_mcp_tools()
 
-        # Create agent with hybrid middleware
-        # Order matters:
-        # 1. RAG enriches context BEFORE generation
-        # 2. Graphiti and ChromaDB store AFTER generation (to avoid data leakage)
         self.agent = create_agent(
             model=BASELINE_MODEL_NAME,
             system_prompt=GRAPHITI_CHROMADB_SYSTEM_PROMPT,
@@ -339,6 +333,7 @@ class GraphitiChromaDBAgent(GraphitiBaseAgent):
         return self.chroma_manager.search_conversations(query, n_results)
 
 
+"""
 # Usage example
 async def main():
     # Create hybrid agent
@@ -362,3 +357,4 @@ if __name__ == "__main__":
     import asyncio
 
     asyncio.run(main())
+"""
