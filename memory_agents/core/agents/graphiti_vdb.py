@@ -325,6 +325,22 @@ class GraphitiChromaDBAgent(GraphitiBaseAgent):
         )
         return self
 
+    async def run(self, message: str, thread_id: str) -> str:
+        """Run agent with automatic ChromaDB storage"""
+        from memory_agents.core.run_agent import run_agent
+        
+        # Get response from agent
+        response = await run_agent(self.agent, message, thread_id)
+        
+        # Manually store in ChromaDB
+        self.chroma_manager.add_conversation_turn(
+            user_message=message,
+            assistant_message=response,
+            metadata={"thread_id": thread_id},
+        )
+        
+        return response
+
     def get_chromadb_stats(self) -> Dict[str, int]:
         """Returns ChromaDB statistics"""
         if not self.chroma_manager:
