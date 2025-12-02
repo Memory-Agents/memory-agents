@@ -9,6 +9,7 @@ from langchain.agents.middleware import (
 )
 from langchain_community.document_compressors import FlashrankRerank
 from langchain_core.documents import Document
+from langchain_core.messages import SystemMessage
 from langgraph.runtime import Runtime
 import chromadb
 from chromadb.config import Settings
@@ -52,10 +53,6 @@ class ChromaDBManager:
         self, user_message: str, assistant_message: str, metadata: Dict[str, Any] = None
     ) -> None:
         """Adds a complete conversation turn (user + assistant) to ChromaDB"""
-        print(f"💾 [ChromaDB Manager] add_conversation_turn called")
-        print(f"   User: {user_message[:100]}")
-        print(f"   Assistant: {assistant_message[:100]}")
-        
         self.message_counter += 1
         timestamp = datetime.now().isoformat()
 
@@ -74,23 +71,11 @@ class ChromaDBManager:
             }
         )
 
-        try:
-            self.conversation_collection.add(
-                documents=[conversation_text],
-                metadatas=[metadata],
-                ids=[f"turn_{self.message_counter}"],
-            )
-            
-            # ✅ 성공 로그
-            print(f"✅ [ChromaDB Manager] Successfully added conversation turn_{self.message_counter}")
-            
-            # ✅ 저장 후 카운트 확인
-            count = self.conversation_collection.count()
-            print(f"📊 [ChromaDB Manager] Total conversations: {count}")
-            
-        except Exception as e:
-            print(f"❌ [ChromaDB Manager] Error adding conversation: {e}")
-            raise
+        self.conversation_collection.add(
+            documents=[conversation_text],
+            metadatas=[metadata],
+            ids=[f"turn_{self.message_counter}"],
+        )
 
     def search_conversations(
         self, query: str, n_results: int = 5
@@ -132,20 +117,29 @@ class RAGEnhancedAgentMiddleware(AgentMiddleware):
     def __init__(self, chroma_manager: ChromaDBManager):
         super().__init__()
         self.chroma_manager = chroma_manager
-        print(f"🔵 [RAG Middleware] Initialized!")
         self.reranker = FlashrankRerank(top_n=5)
 
-    @before_model
-    def inject_chromadb_context(
+    def before_model(
         self, state: AgentState, runtime: Runtime
     ) -> dict[str, Any] | None:
-        user_message = state.get_latest_user_message()
+        # State is a dict with 'messages' key
+        messages = state.get("messages", [])
+        if not messages:
+            return None
+        
+        # Get the latest user message
+        user_message = None
+        for msg in reversed(messages):
+            if hasattr(msg, 'type') and msg.type == 'human':
+                user_message = msg
+                break
+        
         if not user_message:
             return None
 
         query = user_message.content
 
-        # Search in ChromaDB (automatically excludes current message)
+        # Search in ChromaDB
         similar_conversations = self.chroma_manager.search_conversations(
             query, n_results=20
         )
@@ -167,7 +161,6 @@ class RAGEnhancedAgentMiddleware(AgentMiddleware):
             rag_context += "\n--- Similar Past Conversations ---\n"
             for i, doc in enumerate(reranked_docs, 1):
                 relevance_score = doc.metadata.get("relevance_score", 0)
-                # if relevance_score > 0.5:  # Relevance threshold
                 if relevance_score > 0.3:  # Relevance threshold
                     timestamp = doc.metadata.get("timestamp", "unknown")
                     rag_context += f"\n[Conversation {i}] (relevance: {relevance_score:.2f}, date: {timestamp}):\n"
@@ -175,7 +168,10 @@ class RAGEnhancedAgentMiddleware(AgentMiddleware):
 
         # Inject context if relevant
         if rag_context:
-            return {"additional_context": rag_context}
+            # Inject context by adding a system message to the state
+            context_message = SystemMessage(content=rag_context)
+            state["messages"].append(context_message)
+            return None  # State is modified in-place
 
         return None
 
@@ -187,39 +183,40 @@ class ChromaDBStorageMiddleware(AgentMiddleware):
         super().__init__()
         self.chroma_manager = chroma_manager
         self.pending_user_message = None
-        print(f"🟡 [Storage Middleware] Initialized!")
 
-    @before_model
-    def capture_user_message(
+    def before_model(
         self, state: AgentState, runtime: Runtime
     ) -> dict[str, Any] | None:
-        """Captures user message to store later"""
-        user_message = state.get_latest_user_message()
-        if user_message:
-            self.pending_user_message = user_message.content
-            print(f"🔵 [Storage Middleware] Captured user message: {user_message.content[:100]}")
+        # Capture user message before model processes it
+        messages = state.get("messages", [])
+        if not messages:
+            return None
+        
+        # Get the latest user message
+        for msg in reversed(messages):
+            if hasattr(msg, 'type') and msg.type == 'human':
+                self.pending_user_message = msg.content
+                break
+        
         return None
 
-    @after_model
-    def store_conversation_turn(
+    def after_model(
         self, state: AgentState, runtime: Runtime
     ) -> dict[str, Any] | None:
         """Stores complete conversation turn after model response"""
-        print(f"🟢 [Storage Middleware] After model - pending_user_message: {self.pending_user_message is not None}")
         
         if not self.pending_user_message:
-            print("⚠️ [Storage Middleware] No pending user message!")
             return None
 
-        assistant_message = state.get_latest_assistant_message()
-        print(f"🟢 [Storage Middleware] Assistant message exists: {assistant_message is not None}")
+        # Get the latest assistant message
+        messages = state.get("messages", [])
+        assistant_message = None
+        for msg in reversed(messages):
+            if hasattr(msg, 'type') and msg.type == 'ai':
+                assistant_message = msg
+                break
         
         if assistant_message:
-            # ✅ 저장 전 로그
-            print(f"💾 [Storage Middleware] Storing conversation turn...")
-            print(f"   User: {self.pending_user_message[:100]}")
-            print(f"   Assistant: {assistant_message.content[:100]}")
-            
             # Store complete conversation in ChromaDB
             self.chroma_manager.add_conversation_turn(
                 user_message=self.pending_user_message,
@@ -228,14 +225,9 @@ class ChromaDBStorageMiddleware(AgentMiddleware):
                     "thread_id": str(state.get("thread_id", "")),
                 },
             )
-            
-            # ✅ 저장 후 확인
-            print(f"✅ [Storage Middleware] Stored successfully!")
 
             # Reset pending message
             self.pending_user_message = None
-        else:
-            print("⚠️ [Storage Middleware] No assistant message found!")
 
         return None
 
@@ -268,25 +260,6 @@ class BaselineAgent:
         )
         self.agent = agent
         print(f"🔧 [BaselineAgent] Agent created successfully!")
-
-    async def run(self, message: str, thread_id: str) -> str:
-        """Run agent with automatic ChromaDB storage"""
-        from memory_agents.core.run_agent import run_agent
-        
-        print(f"🚀 [BaselineAgent] Running with message: {message[:100]}")
-        
-        # Get response from agent
-        response = await run_agent(self.agent, message, thread_id)
-        
-        # ✅ Manually store conversation
-        print(f"💾 [BaselineAgent] Manually storing conversation...")
-        self.chroma_manager.add_conversation_turn(
-            user_message=message,
-            assistant_message=response,
-            metadata={"thread_id": thread_id},
-        )
-        
-        return response
 
     def get_chromadb_stats(self) -> Dict[str, int]:
         """Returns ChromaDB statistics"""

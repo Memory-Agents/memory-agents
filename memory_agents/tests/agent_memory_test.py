@@ -14,10 +14,10 @@ from langgraph.checkpoint.memory import InMemorySaver
 
 load_dotenv()
 
-# Define a secret that the agent should remember
-SECRET_CODE = "My secret code is 12345."
-SECRET_QUESTION = "What is my secret code?"
-SECRET_ANSWER = "12345"
+# Define a secret that the agent should rememfber
+SECRET_CODE = "My favorite color is blue."
+SECRET_QUESTION = "What is my favorite color?"
+SECRET_ANSWER = "blue"
 
 # Define a unique directory for ChromaDB for this test run to avoid conflicts
 TEST_CHROMADB_DIR = "./test_chroma_db"
@@ -38,52 +38,39 @@ def setup_teardown_chroma():
 
 @pytest.mark.asyncio
 async def test_memory_baseline_vdb_agent():
+    """Test ChromaDB vector memory with RAG - uses middleware for automatic storage"""
     from memory_agents.core.agents.baseline_vdb import BaselineAgent
-    from langchain_community.document_compressors import FlashrankRerank
-    from langchain_core.documents import Document
 
     baseline_vdb_agent = BaselineAgent(persist_directory=TEST_CHROMADB_DIR)
     thread_id_1 = "memory_test_thread_1_baseline_vdb"
 
-    # 1. Store conversations in ChromaDB
-    await baseline_vdb_agent.run(SECRET_CODE, thread_id_1)
-    await baseline_vdb_agent.run("What is the weather like today?", thread_id_1)
-    await baseline_vdb_agent.run("Tell me a joke.", thread_id_1)
+    # 1. Store conversations via middleware
+    await run_agent(baseline_vdb_agent.agent, SECRET_CODE, thread_id_1)
+    await run_agent(baseline_vdb_agent.agent, "What is the weather like today?", thread_id_1)
+    await run_agent(baseline_vdb_agent.agent, "Tell me a joke.", thread_id_1)
 
     # 2. Verify storage
     stats = baseline_vdb_agent.get_chromadb_stats()
-    assert stats["total_conversation_turns"] >= 3
+    assert stats["total_conversation_turns"] >= 3, f"Expected at least 3 conversations, got {stats['total_conversation_turns']}"
 
     # 3. Reset InMemory to test ChromaDB-only retrieval
     baseline_vdb_agent.agent = create_agent(
         model=BASELINE_MODEL_NAME,
         system_prompt=BASELINE_CHROMADB_SYSTEM_PROMPT,
         checkpointer=InMemorySaver(),
-        # middleware=[
-        #     RAGEnhancedAgentMiddleware(baseline_vdb_agent.chroma_manager),
-        #     ChromaDBStorageMiddleware(baseline_vdb_agent.chroma_manager),
-        # ],
+        middleware=[
+            RAGEnhancedAgentMiddleware(baseline_vdb_agent.chroma_manager),
+            ChromaDBStorageMiddleware(baseline_vdb_agent.chroma_manager),
+        ],
     )
 
-    # 4. Query with RAG context from ChromaDB
+    # 4. Query in new thread - RAG middleware should inject context
     thread_id_2 = "memory_test_thread_2_baseline_vdb"
-    search_results = baseline_vdb_agent.chroma_manager.search_conversations(SECRET_QUESTION, n_results=10)
-    
-    # Rerank and build context
-    docs = [Document(page_content=r['content'], metadata=r.get('metadata', {})) for r in search_results]
-    reranked_docs = FlashrankRerank().compress_documents(documents=docs, query=SECRET_QUESTION)
-    
-    rag_context = "\n\n--- Past Relevant Conversations ---\n"
-    for i, doc in enumerate(reranked_docs[:5], 1):
-        if doc.metadata.get("relevance_score", 0) > 0.3:
-            rag_context += f"\n[{i}] {doc.page_content}\n"
-    rag_context += "\n--- End of Past Conversations ---\n"
-    
-    enhanced_message = f"{rag_context}\n\nUser Question: {SECRET_QUESTION}"
-    response = await run_agent(baseline_vdb_agent.agent, enhanced_message, thread_id_2)
+    response = await run_agent(baseline_vdb_agent.agent, SECRET_QUESTION, thread_id_2)
 
     # 5. Verify memory retrieval
-    assert SECRET_ANSWER.lower() in response.lower(), f"Expected '{SECRET_ANSWER}' in response but got: {response}"
+    print(f"Expected '{SECRET_ANSWER}' in response but got: {response}")
+    assert SECRET_ANSWER.lower() in response.lower()
    
 @pytest.mark.asyncio
 async def test_memory_graphiti_agent():
