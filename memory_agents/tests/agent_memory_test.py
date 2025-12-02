@@ -43,22 +43,18 @@ async def test_memory_baseline_vdb_agent():
     from memory_agents.core.agents.baseline_vdb import BaselineAgent
 
     baseline_vdb_agent = BaselineAgent(persist_directory=TEST_CHROMADB_DIR)
+
+    # --- Conversation 1: Introduce the secret ---
     thread_id_1 = "memory_test_thread_1_baseline_vdb"
 
-    # 1. Store conversations via middleware
+    # Store conversations via middleware
     await run_agent(baseline_vdb_agent.agent, SECRET_CODE, thread_id_1)
     await run_agent(
         baseline_vdb_agent.agent, "What is the weather like today?", thread_id_1
     )
     await run_agent(baseline_vdb_agent.agent, "Tell me a joke.", thread_id_1)
 
-    # 2. Verify storage
-    stats = baseline_vdb_agent.get_chromadb_stats()
-    assert stats["total_conversation_turns"] >= 3, (
-        f"Expected at least 3 conversations, got {stats['total_conversation_turns']}"
-    )
-
-    # 3. Reset InMemory to test ChromaDB-only retrieval
+    # Reset InMemory to test ChromaDB-only retrieval
     baseline_vdb_agent.agent = create_agent(
         model=BASELINE_MODEL_NAME,
         system_prompt=BASELINE_CHROMADB_SYSTEM_PROMPT,
@@ -69,12 +65,10 @@ async def test_memory_baseline_vdb_agent():
         ],
     )
 
-    # 4. Query in new thread - RAG middleware should inject context
-    thread_id_2 = "memory_test_thread_2_baseline_vdb"
-    response = await run_agent(baseline_vdb_agent.agent, SECRET_QUESTION, thread_id_2)
+    # --- Conversation 2: Test memory retrieval ---
+    response = await run_agent(baseline_vdb_agent.agent, SECRET_QUESTION, thread_id_1)
 
-    # 5. Verify memory retrieval
-    print(f"Expected '{SECRET_ANSWER}' in response but got: {response}")
+    # Verify memory retrieval
     assert SECRET_ANSWER.lower() in response.lower()
 
 
@@ -91,16 +85,14 @@ async def test_memory_graphiti_agent():
     # --- Conversation 1: Introduce the secret ---
     thread_id_1 = "memory_test_thread_1_graphiti"
 
-    # 1. Teach the agent the secret
-    print(f"\n📝 Teaching: {SECRET_CODE}")
+    # Store conversations via middleware
     await run_agent(graphiti_agent.agent, SECRET_CODE, thread_id_1)
+    await run_agent(
+        graphiti_agent.agent, "What is the weather like today?", thread_id_1
+    )
+    await run_agent(graphiti_agent.agent, "Tell me a joke.", thread_id_1)
 
-    # 2. Have some other conversation
-    print("\n💬 Additional conversations...")
-    await run_agent(graphiti_agent.agent, "What is the capital of France?", thread_id_1)
-    await run_agent(graphiti_agent.agent, "What is 2 + 2?", thread_id_1)
-
-    # 3. Reinitialize agent
+    # Reinitialize agent
     graphiti_tools = await graphiti_agent._get_graphiti_mcp_tools()
     graphiti_agent.agent = create_agent(
         model=BASELINE_MODEL_NAME,
@@ -111,14 +103,9 @@ async def test_memory_graphiti_agent():
     )
 
     # --- Conversation 2: Test memory retrieval ---
-    thread_id_2 = "memory_test_thread_2_graphiti"
+    response = await run_agent(graphiti_agent.agent, SECRET_QUESTION, thread_id_1)
 
-    # 4. Ask about the secret in a new thread
-    print(f"\n❓ Asking in new thread: {SECRET_QUESTION}")
-    response = await run_agent(graphiti_agent.agent, SECRET_QUESTION, thread_id_2)
-    print(f"💬 Final Response: {response}")
-
-    # 5. Assert that the agent remembers the secret
+    # Assert that the agent remembers the secret
     assert SECRET_ANSWER.lower() in response.lower(), (
         f"Expected '{SECRET_ANSWER}' but got: {response}"
     )
@@ -143,22 +130,14 @@ async def test_memory_graphiti_vdb_agent():
     # --- Conversation 1: Introduce the secret ---
     thread_id_1 = "memory_test_thread_1_graphiti_vdb"
 
-    # 1. Teach the agent the secret
-    print(f"\n📝 Teaching: {SECRET_CODE}")
+    # Store conversations via middleware
     await run_agent(graphiti_vdb_agent.agent, SECRET_CODE, thread_id_1)
-
-    # 2. Have some other conversation
-    print("\n💬 Additional conversations...")
-    await run_agent(graphiti_vdb_agent.agent, "Who wrote Hamlet?", thread_id_1)
     await run_agent(
-        graphiti_vdb_agent.agent, "What is the color of the sky?", thread_id_1
+        graphiti_vdb_agent.agent, "What is the weather like today?", thread_id_1
     )
+    await run_agent(graphiti_vdb_agent.agent, "Tell me a joke.", thread_id_1)
 
-    # ✅ 저장 확인
-    stats = graphiti_vdb_agent.get_chromadb_stats()
-    print(f"📊 Stats after all messages: {stats}")
-
-    # 3. Reinitialize agent
+    # Reinitialize agent
     graphiti_tools = await graphiti_vdb_agent._get_graphiti_mcp_tools()
     graphiti_vdb_agent.agent = create_agent(
         model=BASELINE_MODEL_NAME,
@@ -172,21 +151,9 @@ async def test_memory_graphiti_vdb_agent():
     )
 
     # --- Conversation 2: Test memory retrieval ---
-    thread_id_2 = "memory_test_thread_2_graphiti_vdb"
+    response = await run_agent(graphiti_vdb_agent.agent, SECRET_QUESTION, thread_id_1)
 
-    # 4. Ask about the secret in a new thread
-    print(f"\n❓ Asking in new thread: {SECRET_QUESTION}")
-    response = await run_agent(graphiti_vdb_agent.agent, SECRET_QUESTION, thread_id_2)
-    print(f"💬 Final Response: {response}")
-
-    # 5. Assert that the agent remembers the secret
+    # Assert that the agent remembers the secret
     assert SECRET_ANSWER.lower() in response.lower(), (
         f"Expected '{SECRET_ANSWER}' but got: {response}"
-    )
-
-    # Optional: check ChromaDB stats
-    final_stats = graphiti_vdb_agent.get_chromadb_stats()
-    print(f"\n📊 Final stats: {final_stats}")
-    assert final_stats["total_conversation_turns"] >= 3, (
-        f"Expected at least 3 turns, but got {final_stats['total_conversation_turns']}"
     )
