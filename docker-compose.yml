@@ -4,7 +4,6 @@ volumes:
     driver: local
   mcp_logs:
     driver: local
-  mlflow_data:
   valkey-data:
   langfuse_postgres_data:
   langfuse_clickhouse_data:

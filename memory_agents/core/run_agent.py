@@ -1,5 +1,5 @@
 import logging
-from dotenv import dotenv_values, load_dotenv
+from dotenv import load_dotenv
 
 load_dotenv()
 
@@ -48,7 +48,7 @@ async def run_agent_messages(
         The string response from the agent.
     """
     input_data = {"messages": messages}
-    response = agent.invoke(
+    response = await agent.ainvoke(
         input_data,
         {
             "configurable": {"thread_id": thread_id},
@@ -71,7 +71,7 @@ async def run_agent(agent, message: str, thread_id: str) -> str:
         The string response from the agent.
     """
     input_data = {"messages": [{"role": "user", "content": message}]}
-    response = agent.invoke(
+    response = await agent.ainvoke(
         input_data,
         {
             "configurable": {"thread_id": thread_id},

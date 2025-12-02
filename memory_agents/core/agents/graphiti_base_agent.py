@@ -21,15 +21,14 @@ class GraphitiBaseAgent(ABC):
         tools = await client.get_tools()
 
         # Remove any tools that modify memory: * `add_episode` * `delete_episode` * `delete_entity_edge` * `clear_graph`
-        filtered_tools = [
-            tool
+        filtered_tools = {
+            tool.name: tool
             for tool in tools
             if tool.name
             not in [
-                "add_memory",
                 "delete_episode",
                 "delete_entity_edge",
                 "clear_graph",
             ]
-        ]
+        }
         return filtered_tools

@@ -9,6 +9,7 @@ from langchain.agents.middleware import (
 )
 from langchain_community.document_compressors import FlashrankRerank
 from langchain_core.documents import Document
+from langchain_core.messages import SystemMessage
 from langgraph.runtime import Runtime
 import chromadb
 from chromadb.config import Settings
@@ -25,7 +26,7 @@ When relevant past conversations are found, they will be included in your contex
 - Maintain continuity across conversations
 - Provide more personalized and contextual responses
 
-You do not need to manage memory yourself - it is handled automatically.
+You do not need to write memory, only read from the according tool, in order ot 
 Focus on helping the user effectively by using the provided context when relevant."""
 
 
@@ -118,17 +119,27 @@ class RAGEnhancedAgentMiddleware(AgentMiddleware):
         self.chroma_manager = chroma_manager
         self.reranker = FlashrankRerank(top_n=5)
 
-    @before_model
-    def inject_chromadb_context(
+    def before_model(
         self, state: AgentState, runtime: Runtime
     ) -> dict[str, Any] | None:
-        user_message = state.get_latest_user_message()
+        # State is a dict with 'messages' key
+        messages = state.get("messages", [])
+        if not messages:
+            return None
+
+        # Get the latest user message
+        user_message = None
+        for msg in reversed(messages):
+            if hasattr(msg, "type") and msg.type == "human":
+                user_message = msg
+                break
+
         if not user_message:
             return None
 
         query = user_message.content
 
-        # Search in ChromaDB (automatically excludes current message)
+        # Search in ChromaDB
         similar_conversations = self.chroma_manager.search_conversations(
             query, n_results=20
         )
@@ -150,14 +161,17 @@ class RAGEnhancedAgentMiddleware(AgentMiddleware):
             rag_context += "\n--- Similar Past Conversations ---\n"
             for i, doc in enumerate(reranked_docs, 1):
                 relevance_score = doc.metadata.get("relevance_score", 0)
-                if relevance_score > 0.5:  # Relevance threshold
+                if relevance_score > 0.3:  # Relevance threshold
                     timestamp = doc.metadata.get("timestamp", "unknown")
                     rag_context += f"\n[Conversation {i}] (relevance: {relevance_score:.2f}, date: {timestamp}):\n"
                     rag_context += f"{doc.page_content}\n"
 
         # Inject context if relevant
         if rag_context:
-            return {"additional_context": rag_context}
+            # Inject context by adding a system message to the state
+            context_message = SystemMessage(content=rag_context)
+            state["messages"].append(context_message)
+            return None  # State is modified in-place
 
         return None
 
@@ -170,21 +184,25 @@ class ChromaDBStorageMiddleware(AgentMiddleware):
         self.chroma_manager = chroma_manager
         self.pending_user_message = None
 
-    @before_model
-    def capture_user_message(
+    def before_model(
         self, state: AgentState, runtime: Runtime
     ) -> dict[str, Any] | None:
-        """Captures user message to store later"""
-        user_message = state.get_latest_user_message()
-        if user_message:
-            self.pending_user_message = user_message.content
+        # Capture user message before model processes it
+        messages = state.get("messages", [])
+        if not messages:
+            return None
+
+        # Get the latest user message
+        for msg in reversed(messages):
+            if hasattr(msg, "type") and msg.type == "human":
+                self.pending_user_message = msg.content
+                break
+
         return None
 
-    @after_model
-    def store_conversation_turn(
-        self, state: AgentState, runtime: Runtime
-    ) -> dict[str, Any] | None:
+    def after_model(self, state: AgentState, runtime: Runtime) -> dict[str, Any] | None:
         """Stores complete conversation turn after model response"""
+
         if not self.pending_user_message:
             return None
 
@@ -192,7 +210,6 @@ class ChromaDBStorageMiddleware(AgentMiddleware):
         messages = state.get("messages", [])
         assistant_message = None
         for msg in reversed(messages):
-            print(msg.type)
             if hasattr(msg, "type") and msg.type == "ai":
                 assistant_message = msg
                 break
@@ -217,13 +234,8 @@ class BaselineAgent:
     """Baseline agent with ChromaDB RAG integration"""
 
     def __init__(self, persist_directory: str = BASELINE_CHROMADB_DIR) -> None:
-        # Initialize ChromaDB
         self.chroma_manager = ChromaDBManager(persist_directory)
 
-        # Create agent with RAG middleware
-        # Order matters:
-        # 1. RAG enriches context BEFORE generation
-        # 2. ChromaDB stores AFTER generation
         agent = create_agent(
             model=BASELINE_MODEL_NAME,
             system_prompt=BASELINE_CHROMADB_SYSTEM_PROMPT,
@@ -260,17 +272,17 @@ class BaselineAgent:
 def main():
     # Create baseline agent with ChromaDB
     agent = BaselineAgent()
-    
+
     # Display stats
     stats = agent.get_chromadb_stats()
     print(f"ChromaDB Stats: {stats}")
-    
+
     # Example manual search (optional)
     results = agent.search_past_conversations("python programming", n_results=3)
     print(f"\nFound {len(results)} similar conversations")
     for result in results:
         print(f"- {result['metadata'].get('timestamp')}: {result['content'][:100]}...")
-    
+
     # Agent is now ready to use with RAG
     return agent
 
