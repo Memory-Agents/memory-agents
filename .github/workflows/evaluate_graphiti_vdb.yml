@@ -57,6 +57,12 @@ jobs:
         run: docker compose -f docker-compose-workflow.yml wait graphiti
         timeout-minutes: 10
 
+      - name: Failure Logs
+        run: |
+          docker compose -f docker-compose-workflow.yml logs graphiti
+          docker events --filter container=graphiti
+          docker inspect graphiti
+
       - name: Evaluate Baseline+Graphiti+VDB
         run: uv run answer_generation_and_evaluation.py --agent graphiti_vdb
         working-directory: memory_agents/longmemeval
