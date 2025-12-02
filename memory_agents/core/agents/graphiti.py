@@ -11,6 +11,7 @@ from langgraph.runtime import Runtime
 
 from memory_agents.core.agents.graphiti_base_agent import GraphitiBaseAgent
 from memory_agents.config import BASELINE_MODEL_NAME
+from langchain_core.tools import BaseTool
 
 GRAPHITI_SYSTEM_PROMPT = """You are a memory-retrieval agent that uses the Graphiti MCP tools to support the user.
 Episodes are automatically inserted by middleware.
@@ -112,15 +113,15 @@ Do not hallucinate memory. Only use information returned by Graphiti.
 class GraphitiAgentMiddleware(AgentMiddleware):
     """Middleware that inserts user messages into Graphiti AFTER the LLM response"""
 
-    def __init__(self):
+    def __init__(self, graphiti_tools: dict[str, BaseTool]):
         super().__init__()
         self.pending_user_message = None
-
+        self.graphiti_tools = graphiti_tools
     def before_model(
         self, state: AgentState, runtime: Runtime
     ) -> dict[str, Any] | None:
         """Captures user message to store later"""
-        user_message = state.message[-1] if state.message[-1] else None
+        user_message = state["messages"][-1] if state["messages"][-1] else None
         if user_message:
             self.pending_user_message = user_message.content
         return None
@@ -128,8 +129,7 @@ class GraphitiAgentMiddleware(AgentMiddleware):
     def after_model(self, state: AgentState, runtime: Runtime) -> dict[str, Any] | None:
         """Inserts user message into Graphiti after model response (to avoid data leakage)"""
         if self.pending_user_message:
-            runtime.call_tool(
-                "add_episode",
+            self.graphiti_tools["add_memory"].ainvoke(
                 {"message": self.pending_user_message},
             )
             # Reset pending message
@@ -149,7 +149,6 @@ class GraphitiAgent(GraphitiBaseAgent):
             model=BASELINE_MODEL_NAME,
             system_prompt=GRAPHITI_SYSTEM_PROMPT,
             checkpointer=InMemorySaver(),
-            tools=graphiti_tools,
-            middleware=[GraphitiAgentMiddleware()],
+            middleware=[GraphitiAgentMiddleware(graphiti_tools)],
         )
         return self

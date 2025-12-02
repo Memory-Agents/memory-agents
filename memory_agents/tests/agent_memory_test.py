@@ -81,6 +81,7 @@ async def test_memory_graphiti_agent():
     )
 
     graphiti_agent = await GraphitiAgent.create()
+    in_memory_saver = graphiti_agent.agent.checkpointer
 
     # --- Conversation 1: Introduce the secret ---
     thread_id_1 = "memory_test_thread_1_graphiti"
@@ -97,9 +98,8 @@ async def test_memory_graphiti_agent():
     graphiti_agent.agent = create_agent(
         model=BASELINE_MODEL_NAME,
         system_prompt=GRAPHITI_SYSTEM_PROMPT,
-        checkpointer=InMemorySaver(),
-        tools=graphiti_tools,
-        middleware=[GraphitiAgentMiddleware()],
+        checkpointer=in_memory_saver,
+        middleware=[GraphitiAgentMiddleware(graphiti_tools)],
     )
 
     # --- Conversation 2: Test memory retrieval ---
