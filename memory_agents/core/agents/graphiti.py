@@ -120,7 +120,7 @@ class GraphitiAgentMiddleware(AgentMiddleware):
         self, state: AgentState, runtime: Runtime
     ) -> dict[str, Any] | None:
         """Captures user message to store later"""
-        user_message = state.get_latest_user_message()
+        user_message = state.message[-1] if state.message[-1] else None
         if user_message:
             self.pending_user_message = user_message.content
         return None

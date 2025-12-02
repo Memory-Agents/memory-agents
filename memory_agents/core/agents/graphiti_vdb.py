@@ -202,7 +202,7 @@ class RAGEnhancedAgentMiddleware(AgentMiddleware):
     def before_model(
         self, state: AgentState, runtime: Runtime
     ) -> dict[str, Any] | None:
-        user_message = state.get_latest_user_message()
+        user_message = state["messages"][-1] if state["messages"][-1] else None
         if not user_message:
             return None
 
@@ -254,7 +254,7 @@ class GraphitiChromaDBStorageMiddleware(AgentMiddleware):
         self, state: AgentState, runtime: Runtime
     ) -> dict[str, Any] | None:
         """Captures user message to store later"""
-        user_message = state.get_latest_user_message()
+        user_message = state["messages"][-1] if state["messages"][-1] else None
         if user_message:
             self.pending_user_message = user_message.content
         return None
@@ -264,7 +264,7 @@ class GraphitiChromaDBStorageMiddleware(AgentMiddleware):
         if not self.pending_user_message:
             return None
 
-        assistant_message = state.get_latest_assistant_message()
+        assistant_message = state["messages"][-2] if state["messages"][-2] else None
         if assistant_message:
             # Insert into Graphiti AFTER response (to avoid data leakage)
             runtime.call_tool(
