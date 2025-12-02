@@ -13,15 +13,15 @@ class GraphitiBaseAgent(ABC):
     @staticmethod
     def make_tool_sync_compatible(tool):
         """Wraps an async tool to make it synchronously callable"""
-        if hasattr(tool, 'coroutine') and tool.coroutine:
+        if hasattr(tool, "coroutine") and tool.coroutine:
             # Tool is async, create a sync wrapper
             original_coroutine = tool.coroutine
-            
+
             @wraps(original_coroutine)
             def sync_wrapper(*args, **kwargs):
                 # Remove 'runtime' from kwargs if present, as it's handled by langgraph
-                runtime = kwargs.pop('runtime', None)
-                
+                runtime = kwargs.pop("runtime", None)
+
                 try:
                     # Try to get the current event loop
                     loop = asyncio.get_event_loop()
@@ -29,19 +29,24 @@ class GraphitiBaseAgent(ABC):
                         # If loop is already running, create a new task
                         # This is a workaround for nested async calls
                         import nest_asyncio
+
                         nest_asyncio.apply()
-                        return loop.run_until_complete(original_coroutine(*args, **kwargs))
+                        return loop.run_until_complete(
+                            original_coroutine(*args, **kwargs)
+                        )
                     else:
                         # Run in existing loop
-                        return loop.run_until_complete(original_coroutine(*args, **kwargs))
+                        return loop.run_until_complete(
+                            original_coroutine(*args, **kwargs)
+                        )
                 except RuntimeError:
                     # No event loop exists, create a new one
                     return asyncio.run(original_coroutine(*args, **kwargs))
-            
+
             # Replace the tool's coroutine with sync wrapper
             tool.func = sync_wrapper
             tool.coroutine = None  # Mark as no longer async
-        
+
         return tool
 
     async def _get_graphiti_mcp_tools(self) -> Any:
@@ -68,8 +73,10 @@ class GraphitiBaseAgent(ABC):
                 "clear_graph",
             ]
         ]
-        
+
         # Make all tools sync-compatible to avoid "StructuredTool does not support sync invocation" error
-        sync_compatible_tools = [self.make_tool_sync_compatible(tool) for tool in filtered_tools]
-        
+        sync_compatible_tools = [
+            self.make_tool_sync_compatible(tool) for tool in filtered_tools
+        ]
+
         return sync_compatible_tools
