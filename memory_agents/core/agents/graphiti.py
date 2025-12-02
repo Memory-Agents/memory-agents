@@ -1,4 +1,6 @@
-from typing import Any, Self
+import asyncio
+import threading
+from typing import Any, Self, Coroutine
 from langchain.agents import create_agent
 from langgraph.checkpoint.memory import InMemorySaver
 from langchain.agents.middleware import (
@@ -117,6 +119,18 @@ class GraphitiAgentMiddleware(AgentMiddleware):
         super().__init__()
         self.pending_user_message = None
         self.graphiti_tools = graphiti_tools
+        self.loop = asyncio.new_event_loop()
+        self.thread = threading.Thread(target=self._start_loop, daemon=True)
+        self.thread.start()
+
+    def _start_loop(self):
+        asyncio.set_event_loop(self.loop)
+        self.loop.run_forever()
+
+    def _run_async_task(self, task: Coroutine):
+        fut = asyncio.run_coroutine_threadsafe(task, self.loop)
+        return fut.result()
+
     def before_model(
         self, state: AgentState, runtime: Runtime
     ) -> dict[str, Any] | None:
@@ -126,11 +140,18 @@ class GraphitiAgentMiddleware(AgentMiddleware):
             self.pending_user_message = user_message.content
         return None
 
-    def after_model(self, state: AgentState, runtime: Runtime) -> dict[str, Any] | None:
+    def after_model(
+        self, state: AgentState, runtime: Runtime
+    ) -> dict[str, Any] | None:
         """Inserts user message into Graphiti after model response (to avoid data leakage)"""
         if self.pending_user_message:
-            self.graphiti_tools["add_memory"].ainvoke(
-                {"message": self.pending_user_message},
+            self._run_async_task(
+                self.graphiti_tools["add_memory"].ainvoke(
+                    {
+                        "name": "User Message",
+                        "episode_body": self.pending_user_message,
+                    }
+                )
             )
             # Reset pending message
             self.pending_user_message = None
