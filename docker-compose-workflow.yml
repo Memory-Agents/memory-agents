@@ -1,0 +1,12 @@
+volumes:
+  falkordb_data:
+    driver: local
+  mcp_logs:
+    driver: local
+
+
+services:
+  graphiti:
+    extends:
+      file: ./graphiti/mcp_server/docker/docker-compose.yml
+      service: graphiti-falkordb

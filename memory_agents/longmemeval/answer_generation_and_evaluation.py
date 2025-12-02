@@ -189,7 +189,12 @@ if __name__ == "__main__":
     from memory_agents.core.agents.graphiti_vdb import GraphitiChromaDBAgent
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--agent", type=str, default="baseline", choices=["baseline", "graphiti", "graphiti_vdb"])
+    parser.add_argument(
+        "--agent",
+        type=str,
+        default="baseline",
+        choices=["baseline", "graphiti", "graphiti_vdb"],
+    )
     args = parser.parse_args()
 
     difficulty = LONGMEMEVAL_DIFFICIULTY_LEVEL  # Set difficulty here: "easy", "medium", or "hard"

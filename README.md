@@ -204,6 +204,7 @@ deactivate
 │   └── README.md                       # README for the memory_agents application
 ├── shared                              # Directory for shared files (currently empty)
 ├── .env.example                        # Example environment file
+├── docker-compose-workflow.yml         # Docker compose file for running services (light version for running in a Github workflow)
 ├── docker-compose.yml                  # Docker compose file for running services
 ├── LICENSE                             # Project license
 └── README.md                           # Main README for the project
