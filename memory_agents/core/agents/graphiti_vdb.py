@@ -4,8 +4,6 @@ from typing import Any, Self, List, Dict, Coroutine
 from langchain.agents import create_agent
 from langgraph.checkpoint.memory import InMemorySaver
 from langchain.agents.middleware import (
-    before_model,
-    after_model,
     AgentState,
     AgentMiddleware,
 )
@@ -328,6 +326,7 @@ class GraphitiChromaDBAgent(GraphitiBaseAgent):
         self.chroma_manager = ChromaDBManager(persist_directory)
 
         graphiti_tools = await self._get_graphiti_mcp_tools()
+        graphiti_tools_all = await self._get_graphiti_mcp_tools(exclude=[])
 
         self.agent = create_agent(
             model=BASELINE_MODEL_NAME,
@@ -336,7 +335,9 @@ class GraphitiChromaDBAgent(GraphitiBaseAgent):
             tools=list(graphiti_tools.values()),
             middleware=[
                 RAGEnhancedAgentMiddleware(self.chroma_manager),
-                GraphitiChromaDBStorageMiddleware(self.chroma_manager, graphiti_tools),
+                GraphitiChromaDBStorageMiddleware(
+                    self.chroma_manager, graphiti_tools_all
+                ),
             ],
         )
         return self

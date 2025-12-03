@@ -3,7 +3,6 @@ import pytest
 from memory_agents.core.agents.graphiti_base_agent import GraphitiBaseAgent
 
 ALLOWED_TOOLS = {
-    "add_memory", # "add_memory", Allow add_memory for now, as sndjg removed it.
     "search_nodes",
     "search_memory_facts",
     "get_episodes",

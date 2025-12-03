@@ -22,6 +22,7 @@ class GraphitiBaseAgent(ABC):
     async def _get_graphiti_mcp_tools(
         self,
         exclude: list[str] = [
+            "add_memory",
             "delete_episode",
             "delete_entity_edge",
             "clear_graph",

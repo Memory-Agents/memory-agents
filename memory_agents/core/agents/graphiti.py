@@ -4,8 +4,6 @@ from typing import Any, Self, Coroutine
 from langchain.agents import create_agent
 from langgraph.checkpoint.memory import InMemorySaver
 from langchain.agents.middleware import (
-    before_model,
-    after_model,
     AgentState,
     AgentMiddleware,
 )
@@ -165,11 +163,12 @@ class GraphitiAgent(GraphitiBaseAgent):
     async def create(cls) -> Self:
         self = cls()
         graphiti_tools = await self._get_graphiti_mcp_tools()
+        graphiti_tools_all = await self._get_graphiti_mcp_tools(exclude=[])
         self.agent = create_agent(
             model=BASELINE_MODEL_NAME,
             system_prompt=GRAPHITI_SYSTEM_PROMPT,
             checkpointer=InMemorySaver(),
             tools=list(graphiti_tools.values()),
-            middleware=[GraphitiAgentMiddleware(graphiti_tools)],
+            middleware=[GraphitiAgentMiddleware(graphiti_tools_all)],
         )
         return self
