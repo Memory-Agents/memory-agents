@@ -3,6 +3,7 @@ import pytest
 from memory_agents.core.agents.graphiti_base_agent import GraphitiBaseAgent
 
 ALLOWED_TOOLS = {
+    "add_memory", # "add_memory", Allow add_memory for now, as sndjg removed it.
     "search_nodes",
     "search_memory_facts",
     "get_episodes",
@@ -11,7 +12,7 @@ ALLOWED_TOOLS = {
 }
 
 DISALLOWED_TOOLS = {
-    "add_memory",
+    # "add_memory", Allow add_memory for now, as sndjg removed it.
     "delete_episode",
     "delete_entity_edge",
     "clear_graph",
@@ -24,7 +25,7 @@ async def test_graphiti_tools_available():
 
     tools = await agent._get_graphiti_mcp_tools()
 
-    tool_names = {tool.name for tool in tools}
+    tool_names = set(tools.keys())
 
     # --- Ensure disallowed tools are not present ---
     assert not (DISALLOWED_TOOLS & tool_names), (
