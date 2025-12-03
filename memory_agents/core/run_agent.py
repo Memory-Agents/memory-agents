@@ -7,10 +7,10 @@ from langfuse import get_client
 from langfuse.langchain import CallbackHandler
 
 try:
+    logger = logging.getLogger()
+
     # Initialize Langfuse client
     langfuse = get_client()
-
-    logger = logging.getLogger()
 
     # Verify connection
     if langfuse.auth_check():
