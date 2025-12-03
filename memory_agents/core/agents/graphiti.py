@@ -170,7 +170,7 @@ class GraphitiAgent(GraphitiBaseAgent):
             model=BASELINE_MODEL_NAME,
             system_prompt=GRAPHITI_SYSTEM_PROMPT,
             checkpointer=InMemorySaver(),
-            tools=list(graphiti_tools.values()),
+            tools=[graphiti_tools.values()],
             middleware=[GraphitiAgentMiddleware(graphiti_tools)],
         )
         return self
