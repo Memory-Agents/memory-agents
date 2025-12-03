@@ -44,5 +44,5 @@ class GraphitiBaseAgent(ABC):
         Args:
             group_ids: Optional list of group IDs to clear. If not provided, clears the default group.
         """
-        tools = self.get_graphiti_mcp_tools(exclude=[])
+        tools = await self._get_graphiti_mcp_tools(exclude=[])
         await tools["clear_graph"].ainvoke({"group_ids": group_ids})
