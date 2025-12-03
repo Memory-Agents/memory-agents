@@ -146,7 +146,9 @@ async def test_memory_graphiti_vdb_agent():
         tools=list(graphiti_tools.values()),
         middleware=[
             RAGEnhancedAgentMiddleware(graphiti_vdb_agent.chroma_manager),
-            GraphitiChromaDBStorageMiddleware(graphiti_vdb_agent.chroma_manager, graphiti_tools),
+            GraphitiChromaDBStorageMiddleware(
+                graphiti_vdb_agent.chroma_manager, graphiti_tools
+            ),
         ],
     )
 

@@ -4,8 +4,6 @@ from typing import Any, Self, List, Dict, Coroutine
 from langchain.agents import create_agent
 from langgraph.checkpoint.memory import InMemorySaver
 from langchain.agents.middleware import (
-    before_model,
-    after_model,
     AgentState,
     AgentMiddleware,
 )
@@ -146,9 +144,7 @@ class ChromaDBManager:
             metadata = {}
 
         # Combine both messages for complete context
-        conversation_text = (
-            f"User: {user_message}\n\nAssistant: {assistant_message}"
-        )
+        conversation_text = f"User: {user_message}\n\nAssistant: {assistant_message}"
 
         metadata.update(
             {
@@ -283,16 +279,12 @@ class GraphitiChromaDBStorageMiddleware(AgentMiddleware):
             self.pending_user_message = user_message.content
         return None
 
-    def after_model(
-        self, state: AgentState, runtime: Runtime
-    ) -> dict[str, Any] | None:
+    def after_model(self, state: AgentState, runtime: Runtime) -> dict[str, Any] | None:
         """Stores complete conversation turn in both Graphiti and ChromaDB after model response"""
         if not self.pending_user_message:
             return None
 
-        assistant_message = (
-            state["messages"][-1] if state["messages"][-1] else None
-        )
+        assistant_message = state["messages"][-1] if state["messages"][-1] else None
         if assistant_message:
             # Insert into Graphiti AFTER response (to avoid data leakage)
             self._run_async_task(
@@ -327,9 +319,7 @@ class GraphitiChromaDBAgent(GraphitiBaseAgent):
         self.chroma_manager = None
 
     @classmethod
-    async def create(
-        cls, persist_directory: str = "./chroma_memory_db"
-    ) -> Self:
+    async def create(cls, persist_directory: str = "./chroma_memory_db") -> Self:
         self = cls()
 
         self.chroma_manager = ChromaDBManager(persist_directory)
@@ -343,9 +333,7 @@ class GraphitiChromaDBAgent(GraphitiBaseAgent):
             tools=list(graphiti_tools.values()),
             middleware=[
                 RAGEnhancedAgentMiddleware(self.chroma_manager),
-                GraphitiChromaDBStorageMiddleware(
-                    self.chroma_manager, graphiti_tools
-                ),
+                GraphitiChromaDBStorageMiddleware(self.chroma_manager, graphiti_tools),
             ],
         )
         return self
