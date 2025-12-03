@@ -140,9 +140,7 @@ class GraphitiAgentMiddleware(AgentMiddleware):
             self.pending_user_message = user_message.content
         return None
 
-    def after_model(
-        self, state: AgentState, runtime: Runtime
-    ) -> dict[str, Any] | None:
+    def after_model(self, state: AgentState, runtime: Runtime) -> dict[str, Any] | None:
         """Inserts user message into Graphiti after model response (to avoid data leakage)"""
         if self.pending_user_message:
             self._run_async_task(

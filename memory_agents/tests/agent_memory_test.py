@@ -81,7 +81,7 @@ async def test_memory_graphiti_agent():
     )
 
     graphiti_agent = await GraphitiAgent.create()
-    await graphiti_agent.clear_graph() # Reset KG before test
+    await graphiti_agent.clear_graph()  # Reset KG before test
 
     # --- Conversation 1: Introduce the secret ---
     thread_id_1 = "memory_test_thread_1_graphiti"
@@ -127,7 +127,7 @@ async def test_memory_graphiti_vdb_agent():
     graphiti_vdb_agent = await GraphitiChromaDBAgent.create(
         persist_directory=graphiti_vdb_chroma_dir
     )
-    await graphiti_vdb_agent.clear_graph() # Reset KG before test
+    await graphiti_vdb_agent.clear_graph()  # Reset KG before test
 
     # --- Conversation 1: Introduce the secret ---
     thread_id_1 = "memory_test_thread_1_graphiti_vdb"
@@ -148,7 +148,9 @@ async def test_memory_graphiti_vdb_agent():
         tools=list(graphiti_tools.values()),
         middleware=[
             RAGEnhancedAgentMiddleware(graphiti_vdb_agent.chroma_manager),
-            GraphitiChromaDBStorageMiddleware(graphiti_vdb_agent.chroma_manager, graphiti_tools),
+            GraphitiChromaDBStorageMiddleware(
+                graphiti_vdb_agent.chroma_manager, graphiti_tools
+            ),
         ],
     )
 
