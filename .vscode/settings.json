@@ -1,5 +1,10 @@
 {
     "python-envs.pythonProjects": [],
     "python.defaultInterpreterPath": "${workspaceFolder}/memory_agents/.venv/bin/python",
-    "python-envs.defaultEnvManager": "ms-python.python:system"
+    "python-envs.defaultEnvManager": "ms-python.python:system",
+    "python.testing.pytestArgs": [
+        "memory_agents"
+    ],
+    "python.testing.unittestEnabled": false,
+    "python.testing.pytestEnabled": true
 }

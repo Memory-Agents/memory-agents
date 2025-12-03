@@ -1,22 +1,22 @@
-from typing import Any, Self, List, Dict
+import asyncio
+import threading
+from typing import Any, Self, List, Dict, Coroutine
 from langchain.agents import create_agent
 from langgraph.checkpoint.memory import InMemorySaver
 from langchain.agents.middleware import (
-    before_model,
-    after_model,
     AgentState,
     AgentMiddleware,
 )
 from langchain_community.document_compressors import FlashrankRerank
 from langchain_core.documents import Document
 from langgraph.runtime import Runtime
-from langchain_mcp_adapters.client import MultiServerMCPClient
+from langchain_core.tools import BaseTool
 import chromadb
 from chromadb.config import Settings
 from datetime import datetime
 
 from memory_agents.core.agents.graphiti_base_agent import GraphitiBaseAgent
-from memory_agents.core.config import BASELINE_MODEL_NAME, GRAPHITI_MCP_URL
+from memory_agents.core.config import BASELINE_MODEL_NAME
 
 GRAPHITI_CHROMADB_SYSTEM_PROMPT = """You are a memory-retrieval agent that uses both Graphiti MCP tools and ChromaDB RAG to support the user.
 Episodes and conversation history are automatically inserted by middleware into both Graphiti and ChromaDB.
@@ -131,7 +131,10 @@ class ChromaDBManager:
         self.message_counter = self.conversation_collection.count()
 
     def add_conversation_turn(
-        self, user_message: str, assistant_message: str, metadata: Dict[str, Any] = None
+        self,
+        user_message: str,
+        assistant_message: str,
+        metadata: Dict[str, Any] = None,
     ) -> None:
         """Adds a complete conversation turn (user + assistant) to ChromaDB"""
         self.message_counter += 1
@@ -200,11 +203,10 @@ class RAGEnhancedAgentMiddleware(AgentMiddleware):
         self.chroma_manager = chroma_manager
         self.reranker = FlashrankRerank(top_n=5)
 
-    @before_model
-    def inject_chromadb_context(
+    def before_model(
         self, state: AgentState, runtime: Runtime
     ) -> dict[str, Any] | None:
-        user_message = state.get_latest_user_message()
+        user_message = state["messages"][-1] if state["messages"][-1] else None
         if not user_message:
             return None
 
@@ -247,35 +249,51 @@ class RAGEnhancedAgentMiddleware(AgentMiddleware):
 class GraphitiChromaDBStorageMiddleware(AgentMiddleware):
     """Middleware that stores complete conversation in both Graphiti and ChromaDB AFTER response"""
 
-    def __init__(self, chroma_manager: ChromaDBManager):
+    def __init__(
+        self,
+        chroma_manager: ChromaDBManager,
+        graphiti_tools: dict[str, BaseTool],
+    ):
         super().__init__()
         self.chroma_manager = chroma_manager
         self.pending_user_message = None
+        self.graphiti_tools = graphiti_tools
+        self.loop = asyncio.new_event_loop()
+        self.thread = threading.Thread(target=self._start_loop, daemon=True)
+        self.thread.start()
 
-    @before_model
-    def capture_user_message(
+    def _start_loop(self):
+        asyncio.set_event_loop(self.loop)
+        self.loop.run_forever()
+
+    def _run_async_task(self, task: Coroutine):
+        fut = asyncio.run_coroutine_threadsafe(task, self.loop)
+        return fut.result()
+
+    def before_model(
         self, state: AgentState, runtime: Runtime
     ) -> dict[str, Any] | None:
         """Captures user message to store later"""
-        user_message = state.get_latest_user_message()
+        user_message = state["messages"][-1] if state["messages"][-1] else None
         if user_message:
             self.pending_user_message = user_message.content
         return None
 
-    @after_model
-    def store_conversation_turn(
-        self, state: AgentState, runtime: Runtime
-    ) -> dict[str, Any] | None:
+    def after_model(self, state: AgentState, runtime: Runtime) -> dict[str, Any] | None:
         """Stores complete conversation turn in both Graphiti and ChromaDB after model response"""
         if not self.pending_user_message:
             return None
 
-        assistant_message = state.get_latest_assistant_message()
+        assistant_message = state["messages"][-1] if state["messages"][-1] else None
         if assistant_message:
             # Insert into Graphiti AFTER response (to avoid data leakage)
-            runtime.call_tool(
-                "add_episode",
-                {"message": self.pending_user_message},
+            self._run_async_task(
+                self.graphiti_tools["add_memory"].ainvoke(
+                    {
+                        "name": "User Message",
+                        "episode_body": self.pending_user_message,
+                    }
+                )
             )
 
             # Store complete conversation in ChromaDB
@@ -304,24 +322,18 @@ class GraphitiChromaDBAgent(GraphitiBaseAgent):
     async def create(cls, persist_directory: str = "./chroma_memory_db") -> Self:
         self = cls()
 
-        # Initialize ChromaDB
         self.chroma_manager = ChromaDBManager(persist_directory)
 
-        # Get Graphiti tools
         graphiti_tools = await self._get_graphiti_mcp_tools()
 
-        # Create agent with hybrid middleware
-        # Order matters:
-        # 1. RAG enriches context BEFORE generation
-        # 2. Graphiti and ChromaDB store AFTER generation (to avoid data leakage)
         self.agent = create_agent(
             model=BASELINE_MODEL_NAME,
             system_prompt=GRAPHITI_CHROMADB_SYSTEM_PROMPT,
             checkpointer=InMemorySaver(),
-            tools=graphiti_tools,
+            tools=list(graphiti_tools.values()),
             middleware=[
                 RAGEnhancedAgentMiddleware(self.chroma_manager),
-                GraphitiChromaDBStorageMiddleware(self.chroma_manager),
+                GraphitiChromaDBStorageMiddleware(self.chroma_manager, graphiti_tools),
             ],
         )
         return self
@@ -345,6 +357,7 @@ class GraphitiChromaDBAgent(GraphitiBaseAgent):
         return self.chroma_manager.search_conversations(query, n_results)
 
 
+"""
 # Usage example
 async def main():
     # Create hybrid agent
@@ -368,3 +381,4 @@ if __name__ == "__main__":
     import asyncio
 
     asyncio.run(main())
+"""

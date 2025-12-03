@@ -1,7 +1,6 @@
 import pytest
 
 from memory_agents.core.agents.graphiti_base_agent import GraphitiBaseAgent
-from memory_agents.core.config import GRAPHITI_MCP_URL
 
 ALLOWED_TOOLS = {
     "search_nodes",
