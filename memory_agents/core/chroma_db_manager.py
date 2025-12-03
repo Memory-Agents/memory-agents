@@ -1,7 +1,7 @@
 from typing import Any, Dict, List
 from chromadb import Client
 from chromadb.config import Settings
-import datetime
+from datetime import datetime
 
 
 class ChromaDBManager:
