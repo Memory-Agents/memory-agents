@@ -291,7 +291,7 @@ class GraphitiChromaDBStorageMiddleware(AgentMiddleware):
             return None
 
         assistant_message = (
-            state["messages"][-2] if state["messages"][-2] else None
+            state["messages"][-1] if state["messages"][-1] else None
         )
         if assistant_message:
             # Insert into Graphiti AFTER response (to avoid data leakage)

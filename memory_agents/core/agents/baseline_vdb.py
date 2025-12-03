@@ -129,9 +129,9 @@ class RAGEnhancedAgentMiddleware(AgentMiddleware):
 
         # Get the latest user message
         user_message = None
-        for msg in reversed(messages):
-            if hasattr(msg, "type") and msg.type == "human":
-                user_message = msg
+        for message in reversed(messages):
+            if hasattr(message, "type") and message.type == "human":
+                user_message = message
                 break
 
         if not user_message:
@@ -193,9 +193,9 @@ class ChromaDBStorageMiddleware(AgentMiddleware):
             return None
 
         # Get the latest user message
-        for msg in reversed(messages):
-            if hasattr(msg, "type") and msg.type == "human":
-                self.pending_user_message = msg.content
+        for message in reversed(messages):
+            if hasattr(message, "type") and message.type == "human":
+                self.pending_user_message = message.content
                 break
 
         return None
@@ -209,9 +209,9 @@ class ChromaDBStorageMiddleware(AgentMiddleware):
         # Get the latest assistant message
         messages = state.get("messages", [])
         assistant_message = None
-        for msg in reversed(messages):
-            if hasattr(msg, "type") and msg.type == "ai":
-                assistant_message = msg
+        for message in reversed(messages):
+            if hasattr(message, "type") and message.type == "ai":
+                assistant_message = message
                 break
 
         if assistant_message:
