@@ -202,8 +202,10 @@ if __name__ == "__main__":
         agent = BaselineAgent()
     elif args.agent == "graphiti":
         agent = asyncio.run(GraphitiAgent().create())
+        agent.clear_graph()
     elif args.agent == "graphiti_vdb":
         agent = asyncio.run(GraphitiChromaDBAgent().create())
+        agent.clear_graph()
     else:
         raise ValueError(f"Invalid agent: {args.agent}")
     evaluate(difficulty, agent)

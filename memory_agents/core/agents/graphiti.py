@@ -10,6 +10,7 @@ from langchain.agents.middleware import (
     AgentMiddleware,
 )
 from langgraph.runtime import Runtime
+from langchain.messages import SystemMessage, AIMessage, HumanMessage
 
 from memory_agents.core.agents.graphiti_base_agent import GraphitiBaseAgent
 from memory_agents.config import BASELINE_MODEL_NAME
@@ -112,12 +113,22 @@ Do not hallucinate memory. Only use information returned by Graphiti.
 """
 
 
+def get_role(message: AIMessage | HumanMessage | SystemMessage) -> str:
+    if isinstance(message, AIMessage):
+        return "assistant"
+    if isinstance(message, HumanMessage):
+        return "user"
+    if isinstance(message, SystemMessage):
+        return "system"
+    return str(type(message))
+
 class GraphitiAgentMiddleware(AgentMiddleware):
     """Middleware that inserts user messages into Graphiti AFTER the LLM response"""
 
     def __init__(self, graphiti_tools: dict[str, BaseTool]):
         super().__init__()
         self.pending_user_message = None
+        self.fingerprint = None
         self.graphiti_tools = graphiti_tools
         self.loop = asyncio.new_event_loop()
         self.thread = threading.Thread(target=self._start_loop, daemon=True)
@@ -138,6 +149,38 @@ class GraphitiAgentMiddleware(AgentMiddleware):
         user_message = state["messages"][-1] if state["messages"][-1] else None
         if user_message:
             self.pending_user_message = user_message.content
+
+        fingerprint = hash(state["messages"][0].content)
+        if self.fingerprint != fingerprint:
+            self.fingerprint = fingerprint
+            history_chunk_list = []
+            start = 0
+            end = 1
+            while end < len(state["messages"]) - 1:
+                # while state["messages"][end].role != "system" and end < len(state["messages"]) - 1:
+                while (
+                    get_role(state["messages"][end]) != "system"
+                    and end < len(state["messages"]) - 1
+                ):
+                    end += 1
+                history_chunk_list.append((start, end))
+                start = end
+                end = start + 1
+            for s, e in history_chunk_list:
+                self._run_async_task(
+                    self.graphiti_tools["add_memory"].ainvoke(
+                        {
+                            "name": f"fingerprint_{fingerprint}_{s}_{e}",
+                            "episode_body": "\n\n".join(
+                                [
+                                    f"{get_role(m)}: {m.content}"
+                                    for m in state["messages"][s:e]
+                                ]
+                            ),
+                            "sync": True,
+                        }
+                    )
+                )
         return None
 
     def after_model(
