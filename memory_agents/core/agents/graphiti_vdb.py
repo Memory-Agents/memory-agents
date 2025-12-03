@@ -292,7 +292,6 @@ class GraphitiChromaDBStorageMiddleware(AgentMiddleware):
                     {
                         "name": "User Message",
                         "episode_body": self.pending_user_message,
-                        "sync": True,
                     }
                 )
             )
