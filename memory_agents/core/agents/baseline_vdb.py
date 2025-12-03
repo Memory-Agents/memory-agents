@@ -186,7 +186,9 @@ class ChromaDBStorageMiddleware(AgentMiddleware):
         if not messages:
             return None
 
-        self.pending_user_message =  state["messages"][-1] if state["messages"][-1] else None
+        self.pending_user_message = (
+            state["messages"][-1] if state["messages"][-1] else None
+        )
 
         return None
 
@@ -198,8 +200,8 @@ class ChromaDBStorageMiddleware(AgentMiddleware):
 
         # Get the latest assistant message
         messages = state.get("messages", [])
-        
-        assistant_message =  state["messages"][-1] if state["messages"][-1] else None
+
+        assistant_message = state["messages"][-1] if state["messages"][-1] else None
 
         if assistant_message:
             # Store complete conversation in ChromaDB
