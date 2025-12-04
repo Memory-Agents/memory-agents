@@ -81,6 +81,7 @@ async def generate_answers_with_agent(
             )
 
             # Build messages list
+            await agent.clear_agent_memory()
             messages = []
             for date, session in zip(item["haystack_dates"], item["haystack_sessions"]):
                 # Add date information
@@ -226,10 +227,13 @@ if __name__ == "__main__":
     difficulty = LONGMEMEVAL_DIFFICIULTY_LEVEL  # Set difficulty here: "easy", "medium", or "hard"
     if args.agent == "baseline":
         agent = BaselineAgent()
+        print("Using Baseline agent for evaluation.")
     elif args.agent == "graphiti":
         agent = asyncio.run(GraphitiAgent().create())
+        print("Using Graphiti agent for evaluation.")
     elif args.agent == "graphiti_vdb":
         agent = asyncio.run(GraphitiChromaDBAgent().create())
+        print("Using Graphiti with Vector DB agent for evaluation.")
     else:
         raise ValueError(f"Invalid agent: {args.agent}")
     subset = []
