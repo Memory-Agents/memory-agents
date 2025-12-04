@@ -14,6 +14,7 @@ env:
   NEO4J_USER: neo4j
   NEO4J_PASSWORD: demodemo
   MODEL_NAME: gpt-4o-mini
+  SEMAPHORE_LIMIT: 10
 
 defaults:
   run:
@@ -34,6 +35,25 @@ jobs:
       - name: Install Dependencies
         run: uv sync --all-groups
         working-directory: memory_agents
+
+      - name: Generate Encryption Key
+        run: openssl rand -hex 32 > encryption_key.txt
+        working-directory: .
+
+      - name: Set Encryption Key
+        run: export ENCRYPTION_KEY=$(cat encryption_key.txt)
+        working-directory: .
+
+      - name: Run Docker
+        run: docker compose -f docker-compose-workflow.yml up -d
+        working-directory: .
+
+      - name: Wait for services to start
+        run: |
+          name=$(docker compose ps graphiti --format '{{.Name}}')
+          until [ "$(docker inspect -f '{{.State.Health.Status}}' $name)" = "healthy" ]; do
+            sleep 1
+          done
 
       - name: Evaluate Baseline+Graphiti+VDB
         run: uv run answer_generation_and_evaluation.py --agent graphiti_vdb
