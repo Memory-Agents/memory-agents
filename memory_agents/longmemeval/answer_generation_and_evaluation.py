@@ -14,7 +14,10 @@ workspace_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(workspace_root))
 
 from memory_agents.core.run_agent import run_agent_messages
-from memory_agents.config import LONGMEMEVAL_DIFFICIULTY_LEVEL, LONGMEMEVAL_URL_MAP
+from memory_agents.config import (
+    LONGMEMEVAL_DIFFICIULTY_LEVEL,
+    LONGMEMEVAL_URL_MAP,
+)
 
 # Load environment variables from .env file
 load_dotenv()
@@ -24,6 +27,7 @@ async def generate_answers_with_agent(
     agent: Any,
     dataset_path: str = "data/longmemeval_oracle.json",
     output_path: str = "my_predictions.jsonl",
+    subset: list[str] = [],
 ):
     """
     Generate answers for the LongMemEval dataset using the provided agent.
@@ -32,6 +36,8 @@ async def generate_answers_with_agent(
         agent: Agent object (e.g., BaselineAgent or GraphitiAgent)
         dataset_path: Path to the input dataset
         output_path: Path to the output predictions file
+        subset: List of question IDs to process
+        If subset is empty, all questions will be processed.
     """
 
     with open(dataset_path, "r", encoding="utf-8") as f:
@@ -63,6 +69,9 @@ async def generate_answers_with_agent(
 
             # Use a different thread_id for each question_id
             thread_id = str(item["question_id"])
+            if subset and thread_id not in subset:
+                print(f"Skipping question ID: {thread_id} (not in subset)")
+                continue
             print(f"Using thread ID: {thread_id}")
 
             print(
@@ -91,7 +100,10 @@ async def generate_answers_with_agent(
             )
             out.write(
                 json.dumps(
-                    {"question_id": item["question_id"], "hypothesis": hypothesis},
+                    {
+                        "question_id": item["question_id"],
+                        "hypothesis": hypothesis,
+                    },
                     ensure_ascii=False,
                 )
                 + "\n"
@@ -139,7 +151,7 @@ def getDatasetPathWithCheck(difficulty: str) -> str:
     return dataset_path
 
 
-def evaluate(difficulty, agent, no_generation: bool = False):
+def evaluate(difficulty, agent, no_generation: bool = False, subset: list[str] = []):
     # Map difficulty to dataset and output file
     dataset_path = getDatasetPathWithCheck(difficulty=difficulty)
     output_file_map = {
@@ -151,7 +163,10 @@ def evaluate(difficulty, agent, no_generation: bool = False):
     if not no_generation:
         asyncio.run(
             generate_answers_with_agent(
-                agent, dataset_path=dataset_path, output_path=output_path
+                agent,
+                dataset_path=dataset_path,
+                output_path=output_path,
+                subset=subset,
             )
         )
 
@@ -201,6 +216,11 @@ if __name__ == "__main__":
         action="store_true",
         default=False,
     )
+    parser.add_argument(
+        "--subset_path",
+        type=str,
+        default="subset.txt",
+    )
     args = parser.parse_args()
 
     difficulty = LONGMEMEVAL_DIFFICIULTY_LEVEL  # Set difficulty here: "easy", "medium", or "hard"
@@ -212,4 +232,8 @@ if __name__ == "__main__":
         agent = asyncio.run(GraphitiChromaDBAgent().create())
     else:
         raise ValueError(f"Invalid agent: {args.agent}")
+    subset = []
+    if args.subset_path:
+        with open(args.subset_path, "r", encoding="utf-8") as f:
+            subset = [line.strip() for line in f]
     evaluate(difficulty, agent, no_generation=args.no_generation)
