@@ -1,6 +1,6 @@
 import pytest
 import os
-from memory_agents.core.agents.baseline_vdb import BaselineAgent
+from memory_agents.core.agents.baseline_vdb import BaselineVDBAgent
 from memory_agents.core.chroma_db_manager import ChromaDBManager
 import shutil
 
@@ -20,7 +20,7 @@ def test_clear_collection_resets_conversations(temp_chroma_dir):
     within the ChromaDB collection.
     """
     # Initialize BaselineAgent with a temporary persistence directory
-    agent = BaselineAgent(persist_directory=temp_chroma_dir)
+    agent = BaselineVDBAgent(persist_directory=temp_chroma_dir)
     chroma_manager = agent.chroma_manager
 
     # Ensure the collection is initially empty
