@@ -139,7 +139,7 @@ def getDatasetPathWithCheck(difficulty: str) -> str:
     return dataset_path
 
 
-def evaluate(difficulty, agent):
+def evaluate(difficulty, agent, no_generation: bool = False):
     # Map difficulty to dataset and output file
     dataset_path = getDatasetPathWithCheck(difficulty=difficulty)
     output_file_map = {
@@ -148,11 +148,12 @@ def evaluate(difficulty, agent):
         "hard": "my_predictions_m_cleaned.jsonl",
     }
     output_path = output_file_map[difficulty]
-    asyncio.run(
-        generate_answers_with_agent(
-            agent, dataset_path=dataset_path, output_path=output_path
+    if not no_generation:
+        asyncio.run(
+            generate_answers_with_agent(
+                agent, dataset_path=dataset_path, output_path=output_path
+            )
         )
-    )
 
     # The evaluation script expects to be run from the src/evaluation directory
     eval_dir = os.path.join(os.path.dirname(__file__), "src/evaluation")
@@ -195,6 +196,11 @@ if __name__ == "__main__":
         default="baseline",
         choices=["baseline", "graphiti", "graphiti_vdb"],
     )
+    parser.add_argument(
+        "--no_generation",
+        action="store_true",
+        default=False,
+    )
     args = parser.parse_args()
 
     difficulty = LONGMEMEVAL_DIFFICIULTY_LEVEL  # Set difficulty here: "easy", "medium", or "hard"
@@ -206,4 +212,4 @@ if __name__ == "__main__":
         agent = asyncio.run(GraphitiChromaDBAgent().create())
     else:
         raise ValueError(f"Invalid agent: {args.agent}")
-    evaluate(difficulty, agent)
+    evaluate(difficulty, agent, no_generation=args.no_generation)
