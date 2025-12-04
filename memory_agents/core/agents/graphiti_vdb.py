@@ -198,7 +198,8 @@ class GraphitiChromaDBStorageMiddleware(AgentMiddleware):
         if not self.pending_user_message:
             return None
 
-        assistant_message = state["messages"][-2] if state["messages"][-2] else None
+        assistant_message = state["messages"][-1] if state["messages"][-1] else None
+
         if assistant_message:
             # Insert into Graphiti AFTER response (to avoid data leakage)
             self._run_async_task(
