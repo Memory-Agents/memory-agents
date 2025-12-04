@@ -164,7 +164,7 @@ class RAGEnhancedAgentMiddleware(AgentMiddleware):
             for i, doc in enumerate(reranked_docs, 1):
                 if i <= 3:      # ranking is more stable than absolute scoring
                     timestamp = doc.metadata.get("timestamp", "unknown")
-                    rag_context += f"\n[Conversation {i}] (relevance: {relevance_score:.2f}, date: {timestamp}):\n"
+                    rag_context += f"\n[Conversation {i}], date: {timestamp}):\n"
                     rag_context += f"{doc.page_content}\n"
 
         # Inject context if relevant
