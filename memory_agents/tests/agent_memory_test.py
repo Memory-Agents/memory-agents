@@ -47,6 +47,8 @@ async def test_memory_baseline_vdb_agent():
     # --- Conversation 1: Introduce the secret ---
     thread_id_1 = "memory_test_thread_1_baseline_vdb"
 
+    await baseline_vdb_agent.clear_agent_memory()
+
     # Store conversations via middleware
     await run_agent(baseline_vdb_agent.agent, SECRET_CODE, thread_id_1)
     await run_agent(
@@ -81,8 +83,7 @@ async def test_memory_graphiti_agent():
     )
 
     graphiti_agent = await GraphitiAgent.create()
-    await graphiti_agent.clear_graph()  # Reset KG before test
-    await graphiti_agent.clear_graph(["main"])  # Hardcoded for now
+    await graphiti_agent.clear_agent_memory()
 
     # --- Conversation 1: Introduce the secret ---
     thread_id_1 = "memory_test_thread_1_graphiti"
@@ -129,8 +130,7 @@ async def test_memory_graphiti_vdb_agent():
     graphiti_vdb_agent = await GraphitiChromaDBAgent.create(
         persist_directory=graphiti_vdb_chroma_dir
     )
-    await graphiti_vdb_agent.clear_graph()  # Reset KG before test
-    await graphiti_vdb_agent.clear_graph(["main"])  # Hardcoded for now
+    await graphiti_vdb_agent.clear_agent_memory()
 
     # --- Conversation 1: Introduce the secret ---
     thread_id_1 = "memory_test_thread_1_graphiti_vdb"

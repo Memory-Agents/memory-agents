@@ -10,6 +10,7 @@ from langchain_core.documents import Document
 from langchain_core.messages import SystemMessage
 from langgraph.runtime import Runtime
 
+from memory_agents.core.agents.clearable_agent import ClearableAgent
 from memory_agents.core.chroma_db_manager import ChromaDBManager
 from memory_agents.core.config import BASELINE_CHROMADB_DIR, BASELINE_MODEL_NAME
 
@@ -22,9 +23,15 @@ When relevant past conversations are found, they will be included in your contex
 - Maintain continuity across conversations
 - Provide more personalized and contextual responses
 
-You do not need to write memory, only read from the according tool, in order to
+You do not need to manage memory yourself - it is handled automatically.
+Focus on helping the user effectively by using the provided context when relevant.
 
-Focus on helping the user effectively by using the provided context when relevant."""
+You must follow these steps:
+Step 1: Evaluate whether retrieved context is relevant (return yes/no and justification).
+Step 2: Produce final answer using only the relevant information.
+
+Return only Step 2 to the user.
+"""
 
 
 class RAGEnhancedAgentMiddleware(AgentMiddleware):
@@ -76,10 +83,9 @@ class RAGEnhancedAgentMiddleware(AgentMiddleware):
         if reranked_docs:
             rag_context += "\n--- Similar Past Conversations ---\n"
             for i, doc in enumerate(reranked_docs, 1):
-                relevance_score = doc.metadata.get("relevance_score", 0)
-                if relevance_score > 0.3:  # Relevance threshold
+                if i <= 3: # ranking is more stable than absolute scoring
                     timestamp = doc.metadata.get("timestamp", "unknown")
-                    rag_context += f"\n[Conversation {i}] (relevance: {relevance_score:.2f}, date: {timestamp}):\n"
+                    rag_context += f"\n[Conversation {i}], date: {timestamp}):\n"
                     rag_context += f"{doc.page_content}\n"
 
         # Inject context if relevant
@@ -146,7 +152,7 @@ class ChromaDBStorageMiddleware(AgentMiddleware):
         return None
 
 
-class BaselineAgent:
+class BaselineAgent(ClearableAgent):
     """Baseline agent with ChromaDB RAG integration"""
 
     def __init__(self, persist_directory: str = BASELINE_CHROMADB_DIR) -> None:
@@ -180,6 +186,9 @@ class BaselineAgent:
             return []
 
         return self.chroma_manager.search_conversations(query, n_results)
+
+    async def clear_agent_memory(self):
+        self.chroma_manager.clear_collection()
 
 
 """
