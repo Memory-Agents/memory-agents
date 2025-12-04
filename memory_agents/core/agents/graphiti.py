@@ -1,11 +1,10 @@
 import asyncio
 import threading
+import time
 from typing import Any, Self, Coroutine
 from langchain.agents import create_agent
 from langgraph.checkpoint.memory import InMemorySaver
 from langchain.agents.middleware import (
-    before_model,
-    after_model,
     AgentState,
     AgentMiddleware,
 )
@@ -14,6 +13,7 @@ from langchain.messages import SystemMessage, AIMessage, HumanMessage
 
 from memory_agents.core.agents.graphiti_base_agent import GraphitiBaseAgent
 from memory_agents.config import BASELINE_MODEL_NAME
+from langchain_core.messages import HumanMessage
 from langchain_core.tools import BaseTool
 
 GRAPHITI_SYSTEM_PROMPT = """You are a memory-retrieval agent that uses the Graphiti MCP tools to support the user.
@@ -69,20 +69,8 @@ If retrieval is unlikely to help, answer without calling tools.
 
 ## Retrieval Strategy
 
-**1. For past conversation details or recent information:**
-Use `get_episodes`.
-
-**2. For topical or entity-based queries:**
-Use `search_nodes`.
-
-**3. For relationships, attributes, or structured knowledge:**
+**1. For relationships, attributes, or structured knowledge:**
 Use `search_memory_facts`.
-
-**4. For details about a specific fact or relationship:**
-Use `get_entity_edge`.
-
-**5. For operational issues with Graphiti:**
-Use `get_status` only when necessary.
 
 Use focused, minimal search queries based on the key entities or concepts in the user's request.
 
@@ -142,63 +130,48 @@ class GraphitiAgentMiddleware(AgentMiddleware):
         fut = asyncio.run_coroutine_threadsafe(task, self.loop)
         return fut.result()
 
-    def before_model(
+    # def before_model(
+    #     self, state: AgentState, runtime: Runtime
+    # ) -> dict[str, Any] | None:
+    #     """Captures user message to store later"""
+    #     user_message = state["messages"][-1] if state["messages"][-1] else None
+    #     user_message = user_message if isinstance(user_message, HumanMessage) else None
+    #     if user_message:
+    #         self.pending_user_message = user_message.content
+    #     return None
+
+    # def after_agent(self, state: AgentState, runtime: Runtime) -> dict[str, Any] | None:
+    #     """Inserts user message into Graphiti after model response (to avoid data leakage)"""
+    #     if self.pending_user_message:
+    #         self._run_async_task(
+    #             self.graphiti_tools["add_memory"].ainvoke(
+    #                 {
+    #                     "name": "User Message",
+    #                     "episode_body": self.pending_user_message,
+    #                 }
+    #             )
+    #         )
+    #         # Reset pending message
+    #         self.pending_user_message = None
+    #     return None
+
+    def before_agent(
         self, state: AgentState, runtime: Runtime
     ) -> dict[str, Any] | None:
-        """Captures user message to store later"""
-        user_message = state["messages"][-1] if state["messages"][-1] else None
-        if user_message:
-            self.pending_user_message = user_message.content
-
-        fingerprint = hash(state["messages"][0].content)
-        if self.fingerprint != fingerprint:
-            self.fingerprint = fingerprint
-            history_chunk_list = []
-            start = 0
-            end = 1
-            while end < len(state["messages"]) - 1:
-                # while state["messages"][end].role != "system" and end < len(state["messages"]) - 1:
-                while (
-                    get_role(state["messages"][end]) != "system"
-                    and end < len(state["messages"]) - 1
-                ):
-                    end += 1
-                history_chunk_list.append((start, end))
-                start = end
-                end = start + 1
-            for s, e in history_chunk_list:
+        self._run_async_task(
+            self.graphiti_tools["clear_graph"].ainvoke({"group_ids": ["main"]})
+        )
+        for message in state["messages"]:
+            if isinstance(message, HumanMessage):
                 self._run_async_task(
                     self.graphiti_tools["add_memory"].ainvoke(
                         {
-                            "name": f"fingerprint_{fingerprint}_{s}_{e}",
-                            "episode_body": "\n\n".join(
-                                [
-                                    f"{get_role(m)}: {m.content}"
-                                    for m in state["messages"][s:e]
-                                ]
-                            ),
-                            "sync": True,
+                            "name": "User Message",
+                            "episode_body": message.content,
                         }
                     )
                 )
-        return None
-
-    def after_model(
-        self, state: AgentState, runtime: Runtime
-    ) -> dict[str, Any] | None:
-        """Inserts user message into Graphiti after model response (to avoid data leakage)"""
-        if self.pending_user_message:
-            self._run_async_task(
-                self.graphiti_tools["add_memory"].ainvoke(
-                    {
-                        "name": "User Message",
-                        "episode_body": self.pending_user_message,
-                        "sync": True,
-                    }
-                )
-            )
-            # Reset pending message
-            self.pending_user_message = None
+        time.sleep(10)
         return None
 
 
@@ -210,11 +183,12 @@ class GraphitiAgent(GraphitiBaseAgent):
     async def create(cls) -> Self:
         self = cls()
         graphiti_tools = await self._get_graphiti_mcp_tools()
+        graphiti_tools_all = await self._get_graphiti_mcp_tools(exclude=[])
         self.agent = create_agent(
             model=BASELINE_MODEL_NAME,
             system_prompt=GRAPHITI_SYSTEM_PROMPT,
             checkpointer=InMemorySaver(),
             tools=list(graphiti_tools.values()),
-            middleware=[GraphitiAgentMiddleware(graphiti_tools)],
+            middleware=[GraphitiAgentMiddleware(graphiti_tools_all)],
         )
         return self

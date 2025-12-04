@@ -5,37 +5,40 @@ from typing import Any
 from memory_agents.core.config import GRAPHITI_MCP_URL
 
 
-def get_graphiti_client(url: str = GRAPHITI_MCP_URL) -> MultiServerMCPClient:
-    client = MultiServerMCPClient(
-        {
-            "graphiti": {
-                "transport": "streamable_http",  # HTTP-based remote server
-                "url": GRAPHITI_MCP_URL,
-            }
-        }
-    )
-    return client
-
-
 class GraphitiBaseAgent(ABC):
     """Base class for Graphiti agents."""
+
+    def _get_graphiti_client(self, url: str = GRAPHITI_MCP_URL) -> MultiServerMCPClient:
+        client = MultiServerMCPClient(
+            {
+                "graphiti": {
+                    "transport": "streamable_http",  # HTTP-based remote server
+                    "url": GRAPHITI_MCP_URL,
+                }
+            }
+        )
+        return client
 
     async def _get_graphiti_mcp_tools(
         self,
         exclude: list[str] = [
+            "add_memory",
             "delete_episode",
             "delete_entity_edge",
             "clear_graph",
+            # Temp
+            "get_status",
+            "search_nodes",
+            "get_episodes",
+            "get_entity_edge",
         ],
     ) -> Any:
-        client = get_graphiti_client()
+        client = self._get_graphiti_client()
 
         tools = await client.get_tools()
 
         # Remove any tools that modify memory: * `add_episode` * `delete_episode` * `delete_entity_edge` * `clear_graph`
-        filtered_tools = {
-            tool.name: tool for tool in tools if tool.name not in exclude
-        }
+        filtered_tools = {tool.name: tool for tool in tools if tool.name not in exclude}
         return filtered_tools
 
     async def clear_graph(self, group_ids: list[str] | None = None) -> None:
