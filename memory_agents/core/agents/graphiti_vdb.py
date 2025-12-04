@@ -35,6 +35,12 @@ Your job is to solve the user's tasks by:
 3. Using retrieved episodes, node summaries, facts, and similar conversations as context.
 4. Producing a final answer that integrates reasoning with retrieved information from both sources.
 
+You must follow these steps:
+Step 1: Evaluate whether retrieved context is relevant (return yes/no and justification).
+Step 2: Produce final answer using only the relevant information.
+
+Return only Step 2 to the user.
+
 ---
 
 ## Allowed and Disallowed Actions
@@ -54,12 +60,8 @@ Your job is to solve the user's tasks by:
 
 ## When to Retrieve
 
-Trigger retrieval when the user's request likely depends on prior information, including:
-
-* References to previous conversation content
-* Requests involving user preferences, personal details, or past statements
-* Questions about entities or topics previously discussed
-* Requests to summarize or recall earlier information
+Only retrieve if the question explicitly refers to past statements.
+Do NOT retrieve based solely on semantic similarity.
 
 If retrieval is unlikely to help, answer without calling tools.
 
@@ -212,7 +214,7 @@ class RAGEnhancedAgentMiddleware(AgentMiddleware):
 
         # Search in ChromaDB (automatically excludes current message)
         similar_conversations = self.chroma_manager.search_conversations(
-            query, n_results=20
+            query, n_results=5
         )
 
         if not similar_conversations:
@@ -231,15 +233,25 @@ class RAGEnhancedAgentMiddleware(AgentMiddleware):
         if reranked_docs:
             rag_context += "\n--- Similar Past Conversations (ChromaDB) ---\n"
             for i, doc in enumerate(reranked_docs, 1):
-                relevance_score = doc.metadata.get("relevance_score", 0)
-                if relevance_score > 0.5:  # Relevance threshold
+                if i <= 3:      # ranking is more stable than absolute scoring
                     timestamp = doc.metadata.get("timestamp", "unknown")
                     rag_context += f"\n[Conversation {i}] (relevance: {relevance_score:.2f}, date: {timestamp}):\n"
                     rag_context += f"{doc.page_content}\n"
 
         # Inject context if relevant
-        if rag_context:
-            return {"additional_context": rag_context}
+        if rag_context.strip():
+            return {
+                "additional_context": f"""
+                <retrieved_context>
+                {rag_context}
+                </retrieved_context>
+
+                IMPORTANT:
+                Only use information from <retrieved_context> if it is clearly relevant to the user's query.
+                If it is not relevant, IGNORE it entirely.
+                """
+            }
+
 
         return None
 

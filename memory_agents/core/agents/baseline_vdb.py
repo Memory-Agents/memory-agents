@@ -26,7 +26,14 @@ When relevant past conversations are found, they will be included in your contex
 - Provide more personalized and contextual responses
 
 You do not need to manage memory yourself - it is handled automatically.
-Focus on helping the user effectively by using the provided context when relevant."""
+Focus on helping the user effectively by using the provided context when relevant.
+
+You must follow these steps:
+Step 1: Evaluate whether retrieved context is relevant (return yes/no and justification).
+Step 2: Produce final answer using only the relevant information.
+
+Return only Step 2 to the user.
+"""
 
 
 class ChromaDBManager:
@@ -130,7 +137,7 @@ class RAGEnhancedAgentMiddleware(AgentMiddleware):
 
         # Search in ChromaDB (automatically excludes current message)
         similar_conversations = self.chroma_manager.search_conversations(
-            query, n_results=20
+            query, n_results=5
         )
 
         if not similar_conversations:
@@ -149,8 +156,7 @@ class RAGEnhancedAgentMiddleware(AgentMiddleware):
         if reranked_docs:
             rag_context += "\n--- Similar Past Conversations ---\n"
             for i, doc in enumerate(reranked_docs, 1):
-                relevance_score = doc.metadata.get("relevance_score", 0)
-                if relevance_score > 0.5:  # Relevance threshold
+                if i <= 3: # ranking is more stable than absolute scoring
                     timestamp = doc.metadata.get("timestamp", "unknown")
                     rag_context += f"\n[Conversation {i}] (relevance: {relevance_score:.2f}, date: {timestamp}):\n"
                     rag_context += f"{doc.page_content}\n"
