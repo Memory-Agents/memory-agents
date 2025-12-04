@@ -233,7 +233,7 @@ if __name__ == "__main__":
     else:
         raise ValueError(f"Invalid agent: {args.agent}")
     subset = []
-    if args.subset_path:
+    if os.path.exists(args.subset_path):
         with open(args.subset_path, "r", encoding="utf-8") as f:
             subset = [line.strip() for line in f]
-    evaluate(difficulty, agent, no_generation=args.no_generation)
+    evaluate(difficulty, agent, no_generation=args.no_generation, subset=subset)
