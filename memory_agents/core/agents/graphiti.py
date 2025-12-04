@@ -1,17 +1,20 @@
-from typing import Any, Self
+import asyncio
+import threading
+import time
+from typing import Any, Self, Coroutine
 from langchain.agents import create_agent
 from langgraph.checkpoint.memory import InMemorySaver
 from langchain.agents.middleware import (
-    before_model,
-    after_model,
     AgentState,
     AgentMiddleware,
 )
 from langgraph.runtime import Runtime
-from langchain_mcp_adapters.client import MultiServerMCPClient
 
+from memory_agents.core.agents.clearable_agent import ClearableAgent
 from memory_agents.core.agents.graphiti_base_agent import GraphitiBaseAgent
-from memory_agents.config import BASELINE_MODEL_NAME, GRAPHITI_MCP_URL
+from memory_agents.config import BASELINE_MODEL_NAME
+from langchain_core.messages import HumanMessage
+from langchain_core.tools import BaseTool
 
 GRAPHITI_SYSTEM_PROMPT = """You are a memory-retrieval agent that uses the Graphiti MCP tools to support the user.
 Episodes are automatically inserted by middleware.
@@ -27,6 +30,12 @@ Your job is to solve the user's tasks by:
 2. Retrieving relevant prior information from the Graphiti knowledge graph when it would improve the answer.
 3. Using retrieved episodes, node summaries, and facts as context.
 4. Producing a final answer that integrates reasoning with retrieved information.
+
+You must follow these steps:
+Step 1: Evaluate whether retrieved context is relevant (return yes/no and justification).
+Step 2: Produce final answer using only the relevant information.
+
+Return only Step 2 to the user.
 
 ---
 
@@ -53,12 +62,8 @@ Do not modify or manage memory.
 
 ## When to Retrieve
 
-Trigger retrieval when the user's request likely depends on prior information, including:
-
-* References to previous conversation content
-* Requests involving user preferences, personal details, or past statements
-* Questions about entities or topics previously discussed
-* Requests to summarize or recall earlier information
+Only retrieve if the question explicitly refers to past statements.
+Do NOT retrieve based solely on semantic similarity.
 
 If retrieval is unlikely to help, answer without calling tools.
 
@@ -66,14 +71,14 @@ If retrieval is unlikely to help, answer without calling tools.
 
 ## Retrieval Strategy
 
-**1. For past conversation details or recent information:**
-Use `get_episodes`.
+**1. For relationships, attributes, or structured knowledge:**
+Use `search_memory_facts`.
 
 **2. For topical or entity-based queries:**
 Use `search_nodes`.
 
-**3. For relationships, attributes, or structured knowledge:**
-Use `search_memory_facts`.
+**3. For past conversation details or recent information:**
+Use `get_episodes`.
 
 **4. For details about a specific fact or relationship:**
 Use `get_entity_edge`.
@@ -82,6 +87,8 @@ Use `get_entity_edge`.
 Use `get_status` only when necessary.
 
 Use focused, minimal search queries based on the key entities or concepts in the user's request.
+Priority: `search_memory_facts` > `search_nodes` > `get_episodes` > `get_entity_edge` > `get_status`.
+Try next tool in priority order if the previous tool does not return relevant information.
 
 ---
 
@@ -113,36 +120,43 @@ Do not hallucinate memory. Only use information returned by Graphiti.
 class GraphitiAgentMiddleware(AgentMiddleware):
     """Middleware that inserts user messages into Graphiti AFTER the LLM response"""
 
-    def __init__(self):
+    def __init__(self, graphiti_tools: dict[str, BaseTool]):
         super().__init__()
         self.pending_user_message = None
+        self.graphiti_tools = graphiti_tools
+        self.loop = asyncio.new_event_loop()
+        self.thread = threading.Thread(target=self._start_loop, daemon=True)
+        self.thread.start()
 
-    @before_model
-    def capture_user_message(
+    def _start_loop(self):
+        asyncio.set_event_loop(self.loop)
+        self.loop.run_forever()
+
+    def _run_async_task(self, task: Coroutine):
+        fut = asyncio.run_coroutine_threadsafe(task, self.loop)
+        return fut.result()
+
+    def before_agent(
         self, state: AgentState, runtime: Runtime
     ) -> dict[str, Any] | None:
-        """Captures user message to store later"""
-        user_message = state.get_latest_user_message()
-        if user_message:
-            self.pending_user_message = user_message.content
-        return None
-
-    @after_model
-    def insert_user_message_into_graphiti(
-        self, state: AgentState, runtime: Runtime
-    ) -> dict[str, Any] | None:
-        """Inserts user message into Graphiti after model response (to avoid data leakage)"""
-        if self.pending_user_message:
-            runtime.call_tool(
-                "add_episode",
-                {"message": self.pending_user_message},
-            )
-            # Reset pending message
-            self.pending_user_message = None
+        self._run_async_task(
+            self.graphiti_tools["clear_graph"].ainvoke({"group_ids": ["main"]})
+        )
+        for message in state["messages"]:
+            if isinstance(message, HumanMessage):
+                self._run_async_task(
+                    self.graphiti_tools["add_memory"].ainvoke(
+                        {
+                            "name": "User Message",
+                            "episode_body": message.content,
+                        }
+                    )
+                )
+        time.sleep(10)
         return None
 
 
-class GraphitiAgent(GraphitiBaseAgent):
+class GraphitiAgent(GraphitiBaseAgent, ClearableAgent):
     def __init__(self):
         self.agent = None
 
@@ -150,11 +164,15 @@ class GraphitiAgent(GraphitiBaseAgent):
     async def create(cls) -> Self:
         self = cls()
         graphiti_tools = await self._get_graphiti_mcp_tools()
+        graphiti_tools_all = await self._get_graphiti_mcp_tools(exclude=[])
         self.agent = create_agent(
             model=BASELINE_MODEL_NAME,
             system_prompt=GRAPHITI_SYSTEM_PROMPT,
             checkpointer=InMemorySaver(),
-            tools=graphiti_tools,
-            middleware=[GraphitiAgentMiddleware()],
+            tools=list(graphiti_tools.values()),
+            middleware=[GraphitiAgentMiddleware(graphiti_tools_all)],
         )
         return self
+
+    async def clear_agent_memory(self):
+        await self.clear_graph()

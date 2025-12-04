@@ -1,20 +1,22 @@
-from typing import Any, Self, List, Dict
+import asyncio
+import threading
+from typing import Any, Self, List, Dict, Coroutine
 from langchain.agents import create_agent
 from langgraph.checkpoint.memory import InMemorySaver
 from langchain.agents.middleware import (
-    before_model,
-    after_model,
     AgentState,
     AgentMiddleware,
 )
+from langchain_community.document_compressors import FlashrankRerank
+from langchain_core.documents import Document
 from langgraph.runtime import Runtime
-from langchain_mcp_adapters.client import MultiServerMCPClient
-import chromadb
-from chromadb.config import Settings
-from datetime import datetime
+from langchain_core.tools import BaseTool
 
+from memory_agents.core.agents.clearable_agent import ClearableAgent
 from memory_agents.core.agents.graphiti_base_agent import GraphitiBaseAgent
-from memory_agents.core.config import BASELINE_MODEL_NAME, GRAPHITI_MCP_URL
+from memory_agents.core.chroma_db_manager import ChromaDBManager
+from memory_agents.core.config import BASELINE_MODEL_NAME, GRAPHITI_VDB_CHROMADB_DIR
+from langchain_core.messages import SystemMessage
 
 GRAPHITI_CHROMADB_SYSTEM_PROMPT = """You are a memory-retrieval agent that uses both Graphiti MCP tools and ChromaDB RAG to support the user.
 Episodes and conversation history are automatically inserted by middleware into both Graphiti and ChromaDB.
@@ -32,6 +34,12 @@ Your job is to solve the user's tasks by:
    - ChromaDB for semantic similarity search on past conversations
 3. Using retrieved episodes, node summaries, facts, and similar conversations as context.
 4. Producing a final answer that integrates reasoning with retrieved information from both sources.
+
+You must follow these steps:
+Step 1: Evaluate whether retrieved context is relevant (return yes/no and justification).
+Step 2: Produce final answer using only the relevant information.
+
+Return only Step 2 to the user.
 
 ---
 
@@ -52,12 +60,8 @@ Your job is to solve the user's tasks by:
 
 ## When to Retrieve
 
-Trigger retrieval when the user's request likely depends on prior information, including:
-
-* References to previous conversation content
-* Requests involving user preferences, personal details, or past statements
-* Questions about entities or topics previously discussed
-* Requests to summarize or recall earlier information
+Only retrieve if the question explicitly refers to past statements.
+Do NOT retrieve based solely on semantic similarity.
 
 If retrieval is unlikely to help, answer without calling tools.
 
@@ -109,162 +113,142 @@ Do not hallucinate memory. Only use information returned by Graphiti and ChromaD
 """
 
 
-class ChromaDBManager:
-    """Manages ChromaDB integration for conversational RAG"""
-
-    def __init__(self, persist_directory: str = "./chroma_memory_db"):
-        self.client = chromadb.Client(
-            Settings(
-                anonymized_telemetry=False,
-                is_persistent=True,
-                persist_directory=persist_directory,
-            )
-        )
-
-        # Single collection for all conversations
-        self.conversation_collection = self.client.get_or_create_collection(
-            name="conversations", metadata={"hnsw:space": "cosine"}
-        )
-
-        self.message_counter = self.conversation_collection.count()
-
-    def add_conversation_turn(
-        self, user_message: str, assistant_message: str, metadata: Dict[str, Any] = None
-    ) -> None:
-        """Adds a complete conversation turn (user + assistant) to ChromaDB"""
-        self.message_counter += 1
-        timestamp = datetime.now().isoformat()
-
-        if metadata is None:
-            metadata = {}
-
-        # Combine both messages for complete context
-        conversation_text = f"User: {user_message}\n\nAssistant: {assistant_message}"
-
-        metadata.update(
-            {
-                "user_message": user_message,
-                "assistant_message": assistant_message,
-                "timestamp": timestamp,
-                "turn_id": self.message_counter,
-            }
-        )
-
-        self.conversation_collection.add(
-            documents=[conversation_text],
-            metadatas=[metadata],
-            ids=[f"turn_{self.message_counter}"],
-        )
-
-    def search_conversations(
-        self, query: str, n_results: int = 5
-    ) -> List[Dict[str, Any]]:
-        """Searches in conversation history"""
-        total_count = self.conversation_collection.count()
-        if total_count == 0:
-            return []
-
-        results = self.conversation_collection.query(
-            query_texts=[query], n_results=min(n_results, total_count)
-        )
-
-        return self._format_results(results)
-
-    def _format_results(self, results: Dict) -> List[Dict[str, Any]]:
-        """Formats ChromaDB search results"""
-        documents = []
-        if results["documents"] and results["documents"][0]:
-            for i, doc in enumerate(results["documents"][0]):
-                documents.append(
-                    {
-                        "content": doc,
-                        "metadata": results["metadatas"][0][i]
-                        if results["metadatas"]
-                        else {},
-                        "distance": results["distances"][0][i]
-                        if results["distances"]
-                        else None,
-                        "id": results["ids"][0][i] if results["ids"] else None,
-                    }
-                )
-        return documents
-
-
 class RAGEnhancedAgentMiddleware(AgentMiddleware):
     """Middleware that enriches context with ChromaDB results BEFORE response"""
 
     def __init__(self, chroma_manager: ChromaDBManager):
         super().__init__()
         self.chroma_manager = chroma_manager
+        self.reranker = FlashrankRerank(top_n=5)
 
-    @before_model
-    def inject_chromadb_context(
+    def before_model(
         self, state: AgentState, runtime: Runtime
     ) -> dict[str, Any] | None:
-        user_message = state.get_latest_user_message()
+        # State is a dict with 'messages' key
+        messages = state.get("messages", [])
+        if not messages:
+            return None
+
+        # Get the latest user message
+        user_message = None
+        for msg in reversed(messages):
+            if hasattr(msg, "type") and msg.type == "human":
+                user_message = msg
+                break
+
         if not user_message:
             return None
 
         query = user_message.content
 
-        # Search in ChromaDB (automatically excludes current message)
+        # Search in ChromaDB
         similar_conversations = self.chroma_manager.search_conversations(
-            query, n_results=5
+            query, n_results=20
         )
+
+        if not similar_conversations:
+            return None
+
+        docs_to_rerank = [
+            Document(page_content=d["content"], metadata=d["metadata"])
+            for d in similar_conversations
+        ]
+
+        reranked_docs = self.reranker.compress_documents(docs_to_rerank, query)
 
         # Build enriched context
         rag_context = ""
 
-        if similar_conversations:
-            rag_context += "\n--- Similar Past Conversations (ChromaDB) ---\n"
-            for i, conv in enumerate(similar_conversations, 1):
-                similarity = 1 - conv["distance"] if conv["distance"] else 0
-                if similarity > 0.5:  # Relevance threshold
-                    timestamp = conv["metadata"].get("timestamp", "unknown")
-                    rag_context += f"\n[Conversation {i}] (similarity: {similarity:.2f}, date: {timestamp}):\n"
-                    rag_context += f"{conv['content']}\n"
+        if reranked_docs:
+            rag_context += "\n--- Similar Past Conversations ---\n"
+            for i, doc in enumerate(reranked_docs, 1):
+                if i <= 3:      # ranking is more stable than absolute scoring
+                    timestamp = doc.metadata.get("timestamp", "unknown")
+                    rag_context += f"\n[Conversation {i}], date: {timestamp}):\n"
+                    rag_context += f"{doc.page_content}\n"
 
         # Inject context if relevant
         if rag_context:
-            return {"additional_context": rag_context}
+            rag_context_message = f"""
+                <retrieved_context>
+                {rag_context}
+                </retrieved_context>
 
+                IMPORTANT:
+                Only use information from <retrieved_context> if it is clearly relevant to the user's query.
+                If it is not relevant, IGNORE it entirely.
+                """
+            # Inject context by adding a system message to the state
+            context_message = SystemMessage(content=rag_context_message)
+            state["messages"].append(context_message)
+            return None  # State is modified in-place
         return None
 
 
 class GraphitiChromaDBStorageMiddleware(AgentMiddleware):
     """Middleware that stores complete conversation in both Graphiti and ChromaDB AFTER response"""
 
-    def __init__(self, chroma_manager: ChromaDBManager):
+    def __init__(
+        self,
+        chroma_manager: ChromaDBManager,
+        graphiti_tools: dict[str, BaseTool],
+    ):
         super().__init__()
         self.chroma_manager = chroma_manager
         self.pending_user_message = None
+        self.graphiti_tools = graphiti_tools
+        self.loop = asyncio.new_event_loop()
+        self.thread = threading.Thread(target=self._start_loop, daemon=True)
+        self.thread.start()
 
-    @before_model
-    def capture_user_message(
+    def _start_loop(self):
+        asyncio.set_event_loop(self.loop)
+        self.loop.run_forever()
+
+    def _run_async_task(self, task: Coroutine):
+        fut = asyncio.run_coroutine_threadsafe(task, self.loop)
+        return fut.result()
+
+    def before_model(
         self, state: AgentState, runtime: Runtime
     ) -> dict[str, Any] | None:
-        """Captures user message to store later"""
-        user_message = state.get_latest_user_message()
-        if user_message:
-            self.pending_user_message = user_message.content
+        # Capture user message before model processes it
+        messages = state.get("messages", [])
+        if not messages:
+            return None
+
+        # Get the latest user message
+        for msg in reversed(messages):
+            if hasattr(msg, "type") and msg.type == "human":
+                self.pending_user_message = msg.content
+                break
+
         return None
 
-    @after_model
-    def store_conversation_turn(
-        self, state: AgentState, runtime: Runtime
-    ) -> dict[str, Any] | None:
-        """Stores complete conversation turn in both Graphiti and ChromaDB after model response"""
+    def after_model(self, state: AgentState, runtime: Runtime) -> dict[str, Any] | None:
+        """Stores complete conversation turn after model response"""
+
         if not self.pending_user_message:
             return None
 
-        assistant_message = state.get_latest_assistant_message()
-        if assistant_message:
-            # Insert into Graphiti AFTER response (to avoid data leakage)
-            runtime.call_tool(
-                "add_episode",
-                {"message": self.pending_user_message},
-            )
+        # Get the latest assistant message
+        messages = state.get("messages", [])
+        assistant_message = None
+        for msg in reversed(messages):
+            if hasattr(msg, "type") and msg.type == "ai":
+                assistant_message = msg
+                break
 
+        if assistant_message:  #
+            # Insert into Graphiti AFTER response (to avoid data leakage)
+            self._run_async_task(
+                self.graphiti_tools["add_memory"].ainvoke(
+                    {
+                        "name": "User Message",
+                        "episode_body": self.pending_user_message,
+                    }
+                )
+            )
             # Store complete conversation in ChromaDB
             self.chroma_manager.add_conversation_turn(
                 user_message=self.pending_user_message,
@@ -280,7 +264,7 @@ class GraphitiChromaDBStorageMiddleware(AgentMiddleware):
         return None
 
 
-class GraphitiChromaDBAgent(GraphitiBaseAgent):
+class GraphitiChromaDBAgent(GraphitiBaseAgent, ClearableAgent):
     """Agent combining Graphiti and ChromaDB for hybrid RAG"""
 
     def __init__(self):
@@ -288,27 +272,24 @@ class GraphitiChromaDBAgent(GraphitiBaseAgent):
         self.chroma_manager = None
 
     @classmethod
-    async def create(cls, persist_directory: str = "./chroma_memory_db") -> Self:
+    async def create(cls, persist_directory: str = GRAPHITI_VDB_CHROMADB_DIR) -> Self:
         self = cls()
 
-        # Initialize ChromaDB
         self.chroma_manager = ChromaDBManager(persist_directory)
 
-        # Get Graphiti tools
         graphiti_tools = await self._get_graphiti_mcp_tools()
+        graphiti_tools_all = await self._get_graphiti_mcp_tools(exclude=[])
 
-        # Create agent with hybrid middleware
-        # Order matters:
-        # 1. RAG enriches context BEFORE generation
-        # 2. Graphiti and ChromaDB store AFTER generation (to avoid data leakage)
         self.agent = create_agent(
             model=BASELINE_MODEL_NAME,
             system_prompt=GRAPHITI_CHROMADB_SYSTEM_PROMPT,
             checkpointer=InMemorySaver(),
-            tools=graphiti_tools,
+            tools=list(graphiti_tools.values()),
             middleware=[
                 RAGEnhancedAgentMiddleware(self.chroma_manager),
-                GraphitiChromaDBStorageMiddleware(self.chroma_manager),
+                GraphitiChromaDBStorageMiddleware(
+                    self.chroma_manager, graphiti_tools_all
+                ),
             ],
         )
         return self
@@ -331,7 +312,12 @@ class GraphitiChromaDBAgent(GraphitiBaseAgent):
 
         return self.chroma_manager.search_conversations(query, n_results)
 
+    async def clear_agent_memory(self):
+        self.chroma_manager.clear_collection()
+        await self.clear_graph()
 
+
+"""
 # Usage example
 async def main():
     # Create hybrid agent
@@ -355,3 +341,4 @@ if __name__ == "__main__":
     import asyncio
 
     asyncio.run(main())
+"""

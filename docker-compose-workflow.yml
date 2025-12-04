@@ -1,0 +1,18 @@
+volumes:
+  falkordb_data:
+    driver: local
+  mcp_logs:
+    driver: local
+
+
+services:
+  graphiti:
+    extends:
+      file: ./graphiti/mcp_server/docker/docker-compose.yml
+      service: graphiti-falkordb
+    environment:
+      - OPENAI_API_KEY
+      - NEO4J_URI
+      - NEO4J_USER
+      - NEO4J_PASSWORD
+      - SEMAPHORE_LIMIT

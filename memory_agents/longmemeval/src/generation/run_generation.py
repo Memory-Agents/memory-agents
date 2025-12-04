@@ -5,7 +5,6 @@ from openai import OpenAI
 import backoff
 from datetime import datetime
 import argparse
-from transformers import AutoTokenizer
 import tiktoken
 
 

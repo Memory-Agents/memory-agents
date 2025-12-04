@@ -1,3 +1,34 @@
+import logging
+from dotenv import load_dotenv
+
+load_dotenv()
+
+from langfuse import get_client
+from langfuse.langchain import CallbackHandler
+
+try:
+    logger = logging.getLogger()
+
+    # Initialize Langfuse client
+    langfuse = get_client()
+
+    # Verify connection
+    if langfuse.auth_check():
+        logger.info("Langfuse client is authenticated and ready!")
+    else:
+        logger.error("Langfuse client authentication failed.")
+        raise Exception("Langfuse client authentication failed.")
+
+    langfuse_handler = CallbackHandler()
+except:
+    logger.error(
+        "Could not initialize Langfuse, please check if Langfuse is running on correctly."
+    )
+
+    langfuse_handler = None
+    # Initialize Langfuse CallbackHandler for Langchain (tracing)
+
+
 async def run_agent_messages(
     agent,
     messages: list[dict[str, str]],
@@ -5,6 +36,7 @@ async def run_agent_messages(
 ) -> str:
     """
     Run an OpenAI LangChain agent with a full messages history.
+    Build configuration with Langfuse callback handler if available.
 
     Args:
         agent: The LangChain agent instance.
@@ -16,9 +48,12 @@ async def run_agent_messages(
         The string response from the agent.
     """
     input_data = {"messages": messages}
-    response = agent.invoke(
+    response = await agent.ainvoke(
         input_data,
-        {"configurable": {"thread_id": thread_id}},
+        {
+            "configurable": {"thread_id": thread_id},
+            "callbacks": [langfuse_handler] if langfuse_handler else [],
+        },
     )
     return extract_response_content(response)
 
@@ -36,9 +71,12 @@ async def run_agent(agent, message: str, thread_id: str) -> str:
         The string response from the agent.
     """
     input_data = {"messages": [{"role": "user", "content": message}]}
-    response = agent.invoke(
+    response = await agent.ainvoke(
         input_data,
-        {"configurable": {"thread_id": thread_id}},
+        {
+            "configurable": {"thread_id": thread_id},
+            "callbacks": [langfuse_handler] if langfuse_handler else [],
+        },
     )
     return extract_response_content(response)
 
