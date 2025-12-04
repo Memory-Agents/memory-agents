@@ -230,7 +230,6 @@ if __name__ == "__main__":
         print("Using Baseline agent for evaluation.")
     elif args.agent == "graphiti":
         agent = asyncio.run(GraphitiAgent().create())
-        print("Using Graphiti agent for evaluation.")
     elif args.agent == "graphiti_vdb":
         agent = asyncio.run(GraphitiChromaDBAgent().create())
         print("Using Graphiti with Vector DB agent for evaluation.")
