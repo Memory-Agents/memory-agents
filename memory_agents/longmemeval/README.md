@@ -10,7 +10,7 @@ See the toplevel README.md of the repository.
 
 ```bash
 cd /memory_agents/longmemeval
-uv run answer_generation_and_evaluation.py
+uv run answer_generation_and_evaluation.py --agent="graphiti_vdb"
 ```
 
 ## 3. Check the results

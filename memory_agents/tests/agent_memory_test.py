@@ -47,6 +47,8 @@ async def test_memory_baseline_vdb_agent():
     # --- Conversation 1: Introduce the secret ---
     thread_id_1 = "memory_test_thread_1_baseline_vdb"
 
+    await baseline_vdb_agent.clear_agent_memory()
+
     # Store conversations via middleware
     await run_agent(baseline_vdb_agent.agent, SECRET_CODE, thread_id_1)
     await run_agent(
@@ -81,7 +83,7 @@ async def test_memory_graphiti_agent():
     )
 
     graphiti_agent = await GraphitiAgent.create()
-    await graphiti_agent.clear_graph()  # Reset KG before test
+    await graphiti_agent.clear_agent_memory()
 
     # --- Conversation 1: Introduce the secret ---
     thread_id_1 = "memory_test_thread_1_graphiti"
@@ -95,12 +97,13 @@ async def test_memory_graphiti_agent():
 
     # Reinitialize agent
     graphiti_tools = await graphiti_agent._get_graphiti_mcp_tools()
+    graphiti_tools_all = await graphiti_agent._get_graphiti_mcp_tools(exclude=[])
     graphiti_agent.agent = create_agent(
         model=BASELINE_MODEL_NAME,
         system_prompt=GRAPHITI_SYSTEM_PROMPT,
         checkpointer=InMemorySaver(),
         tools=list(graphiti_tools.values()),
-        middleware=[GraphitiAgentMiddleware(graphiti_tools)],
+        middleware=[GraphitiAgentMiddleware(graphiti_tools_all)],
     )
 
     # --- Conversation 2: Test memory retrieval ---
@@ -127,7 +130,7 @@ async def test_memory_graphiti_vdb_agent():
     graphiti_vdb_agent = await GraphitiChromaDBAgent.create(
         persist_directory=graphiti_vdb_chroma_dir
     )
-    await graphiti_vdb_agent.clear_graph()  # Reset KG before test
+    await graphiti_vdb_agent.clear_agent_memory()
 
     # --- Conversation 1: Introduce the secret ---
     thread_id_1 = "memory_test_thread_1_graphiti_vdb"
@@ -141,6 +144,7 @@ async def test_memory_graphiti_vdb_agent():
 
     # Reinitialize agent
     graphiti_tools = await graphiti_vdb_agent._get_graphiti_mcp_tools()
+    graphiti_tools_all = await graphiti_vdb_agent._get_graphiti_mcp_tools(exclude=[])
     graphiti_vdb_agent.agent = create_agent(
         model=BASELINE_MODEL_NAME,
         system_prompt=GRAPHITI_CHROMADB_SYSTEM_PROMPT,
@@ -149,7 +153,7 @@ async def test_memory_graphiti_vdb_agent():
         middleware=[
             RAGEnhancedAgentMiddleware(graphiti_vdb_agent.chroma_manager),
             GraphitiChromaDBStorageMiddleware(
-                graphiti_vdb_agent.chroma_manager, graphiti_tools
+                graphiti_vdb_agent.chroma_manager, graphiti_tools_all
             ),
         ],
     )
