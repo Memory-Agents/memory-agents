@@ -81,6 +81,7 @@ async def generate_answers_with_agent(
             )
 
             # Build messages list
+            await agent.clear_agent_memory()
             messages = []
             for date, session in zip(item["haystack_dates"], item["haystack_sessions"]):
                 # Add date information
