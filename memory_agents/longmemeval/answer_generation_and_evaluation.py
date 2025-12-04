@@ -231,7 +231,6 @@ if __name__ == "__main__":
         agent = asyncio.run(GraphitiAgent().create())
     elif args.agent == "graphiti_vdb":
         agent = asyncio.run(GraphitiChromaDBAgent().create())
-        print("Using Graphiti with Vector DB agent for evaluation.")
     else:
         raise ValueError(f"Invalid agent: {args.agent}")
     subset = []
