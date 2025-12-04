@@ -44,10 +44,6 @@ jobs:
         run: export ENCRYPTION_KEY=$(cat encryption_key.txt)
         working-directory: .
 
-      - name: Run Docker
-        run: docker compose -f docker-compose-workflow.yml up -d
-        working-directory: .
-
       - name: Evaluate Baseline+VDB
         run: uv run answer_generation_and_evaluation.py --agent baseline_vdb
         working-directory: memory_agents/longmemeval
