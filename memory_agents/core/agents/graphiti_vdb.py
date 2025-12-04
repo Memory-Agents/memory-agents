@@ -16,6 +16,7 @@ from memory_agents.core.agents.clearable_agent import ClearableAgent
 from memory_agents.core.agents.graphiti_base_agent import GraphitiBaseAgent
 from memory_agents.core.chroma_db_manager import ChromaDBManager
 from memory_agents.core.config import BASELINE_MODEL_NAME, GRAPHITI_VDB_CHROMADB_DIR
+from langchain_core.messages import SystemMessage
 
 GRAPHITI_CHROMADB_SYSTEM_PROMPT = """You are a memory-retrieval agent that uses both Graphiti MCP tools and ChromaDB RAG to support the user.
 Episodes and conversation history are automatically inserted by middleware into both Graphiti and ChromaDB.
@@ -121,13 +122,24 @@ class RAGEnhancedAgentMiddleware(AgentMiddleware):
     def before_model(
         self, state: AgentState, runtime: Runtime
     ) -> dict[str, Any] | None:
-        user_message = state["messages"][-1] if state["messages"][-1] else None
+        # State is a dict with 'messages' key
+        messages = state.get("messages", [])
+        if not messages:
+            return None
+
+        # Get the latest user message
+        user_message = None
+        for msg in reversed(messages):
+            if hasattr(msg, "type") and msg.type == "human":
+                user_message = msg
+                break
+
         if not user_message:
             return None
 
         query = user_message.content
 
-        # Search in ChromaDB (automatically excludes current message)
+        # Search in ChromaDB
         similar_conversations = self.chroma_manager.search_conversations(
             query, n_results=20
         )
@@ -146,17 +158,20 @@ class RAGEnhancedAgentMiddleware(AgentMiddleware):
         rag_context = ""
 
         if reranked_docs:
-            rag_context += "\n--- Similar Past Conversations (ChromaDB) ---\n"
+            rag_context += "\n--- Similar Past Conversations ---\n"
             for i, doc in enumerate(reranked_docs, 1):
                 relevance_score = doc.metadata.get("relevance_score", 0)
-                if relevance_score > 0.5:  # Relevance threshold
+                if relevance_score > 0.3:  # Relevance threshold
                     timestamp = doc.metadata.get("timestamp", "unknown")
                     rag_context += f"\n[Conversation {i}] (relevance: {relevance_score:.2f}, date: {timestamp}):\n"
                     rag_context += f"{doc.page_content}\n"
 
         # Inject context if relevant
         if rag_context:
-            return {"additional_context": rag_context}
+            # Inject context by adding a system message to the state
+            context_message = SystemMessage(content=rag_context)
+            state["messages"].append(context_message)
+            return None  # State is modified in-place
 
         return None
 
@@ -188,20 +203,34 @@ class GraphitiChromaDBStorageMiddleware(AgentMiddleware):
     def before_model(
         self, state: AgentState, runtime: Runtime
     ) -> dict[str, Any] | None:
-        """Captures user message to store later"""
-        user_message = state["messages"][-1] if state["messages"][-1] else None
-        if user_message:
-            self.pending_user_message = user_message.content
+        # Capture user message before model processes it
+        messages = state.get("messages", [])
+        if not messages:
+            return None
+
+        # Get the latest user message
+        for msg in reversed(messages):
+            if hasattr(msg, "type") and msg.type == "human":
+                self.pending_user_message = msg.content
+                break
+
         return None
 
     def after_model(self, state: AgentState, runtime: Runtime) -> dict[str, Any] | None:
-        """Stores complete conversation turn in both Graphiti and ChromaDB after model response"""
+        """Stores complete conversation turn after model response"""
+
         if not self.pending_user_message:
             return None
 
-        assistant_message = state["messages"][-1] if state["messages"][-1] else None
+        # Get the latest assistant message
+        messages = state.get("messages", [])
+        assistant_message = None
+        for msg in reversed(messages):
+            if hasattr(msg, "type") and msg.type == "ai":
+                assistant_message = msg
+                break
 
-        if assistant_message:
+        if assistant_message:  #
             # Insert into Graphiti AFTER response (to avoid data leakage)
             self._run_async_task(
                 self.graphiti_tools["add_memory"].ainvoke(
@@ -211,7 +240,6 @@ class GraphitiChromaDBStorageMiddleware(AgentMiddleware):
                     }
                 )
             )
-
             # Store complete conversation in ChromaDB
             self.chroma_manager.add_conversation_turn(
                 user_message=self.pending_user_message,
