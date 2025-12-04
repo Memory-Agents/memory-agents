@@ -227,7 +227,6 @@ if __name__ == "__main__":
     difficulty = LONGMEMEVAL_DIFFICIULTY_LEVEL  # Set difficulty here: "easy", "medium", or "hard"
     if args.agent == "baseline":
         agent = BaselineAgent()
-        print("Using Baseline agent for evaluation.")
     elif args.agent == "graphiti":
         agent = asyncio.run(GraphitiAgent().create())
     elif args.agent == "graphiti_vdb":
