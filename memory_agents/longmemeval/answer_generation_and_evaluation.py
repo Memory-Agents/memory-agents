@@ -211,7 +211,7 @@ if __name__ == "__main__":
         "--agent",
         type=str,
         default="baseline",
-        choices=["baseline", "graphiti", "graphiti_vdb"],
+        choices=["baseline", "graphiti", "graphiti_vdb", "baseline_vdb"],
     )
     parser.add_argument(
         "--no_generation",
