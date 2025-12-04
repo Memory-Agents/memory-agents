@@ -119,31 +119,6 @@ class GraphitiAgentMiddleware(AgentMiddleware):
         fut = asyncio.run_coroutine_threadsafe(task, self.loop)
         return fut.result()
 
-    # def before_model(
-    #     self, state: AgentState, runtime: Runtime
-    # ) -> dict[str, Any] | None:
-    #     """Captures user message to store later"""
-    #     user_message = state["messages"][-1] if state["messages"][-1] else None
-    #     user_message = user_message if isinstance(user_message, HumanMessage) else None
-    #     if user_message:
-    #         self.pending_user_message = user_message.content
-    #     return None
-
-    # def after_agent(self, state: AgentState, runtime: Runtime) -> dict[str, Any] | None:
-    #     """Inserts user message into Graphiti after model response (to avoid data leakage)"""
-    #     if self.pending_user_message:
-    #         self._run_async_task(
-    #             self.graphiti_tools["add_memory"].ainvoke(
-    #                 {
-    #                     "name": "User Message",
-    #                     "episode_body": self.pending_user_message,
-    #                 }
-    #             )
-    #         )
-    #         # Reset pending message
-    #         self.pending_user_message = None
-    #     return None
-
     def before_agent(
         self, state: AgentState, runtime: Runtime
     ) -> dict[str, Any] | None:
