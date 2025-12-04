@@ -26,11 +26,6 @@ class GraphitiBaseAgent(ABC):
             "delete_episode",
             "delete_entity_edge",
             "clear_graph",
-            # Temp
-            "get_status",
-            "search_nodes",
-            "get_episodes",
-            "get_entity_edge",
         ],
     ) -> Any:
         client = self._get_graphiti_client()
