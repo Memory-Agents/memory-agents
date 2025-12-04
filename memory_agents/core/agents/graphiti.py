@@ -71,21 +71,7 @@ If retrieval is unlikely to help, answer without calling tools.
 **1. For relationships, attributes, or structured knowledge:**
 Use `search_memory_facts`.
 
-**2. For topical or entity-based queries:**
-Use `search_nodes`.
-
-**3. For past conversation details or recent information:**
-Use `get_episodes`.
-
-**4. For details about a specific fact or relationship:**
-Use `get_entity_edge`.
-
-**5. For operational issues with Graphiti:**
-Use `get_status` only when necessary.
-
 Use focused, minimal search queries based on the key entities or concepts in the user's request.
-Priority: `search_memory_facts` > `search_nodes` > `get_episodes` > `get_entity_edge` > `get_status`.
-Try next tool in priority order if the previous tool does not return relevant information.
 
 ---
 
