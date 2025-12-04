@@ -22,7 +22,8 @@ When relevant past conversations are found, they will be included in your contex
 - Maintain continuity across conversations
 - Provide more personalized and contextual responses
 
-You do not need to write memory, only read from the according tool, in order ot 
+You do not need to write memory, only read from the according tool, in order to
+
 Focus on helping the user effectively by using the provided context when relevant."""
 
 
