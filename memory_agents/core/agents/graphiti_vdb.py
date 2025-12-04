@@ -162,7 +162,7 @@ class RAGEnhancedAgentMiddleware(AgentMiddleware):
         if reranked_docs:
             rag_context += "\n--- Similar Past Conversations ---\n"
             for i, doc in enumerate(reranked_docs, 1):
-                if i <= 3:      # ranking is more stable than absolute scoring
+                if i <= 3:  # ranking is more stable than absolute scoring
                     timestamp = doc.metadata.get("timestamp", "unknown")
                     rag_context += f"\n[Conversation {i}], date: {timestamp}):\n"
                     rag_context += f"{doc.page_content}\n"

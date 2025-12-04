@@ -13,6 +13,7 @@ from dotenv import load_dotenv
 workspace_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(workspace_root))
 
+from memory_agents.core.agents.baseline_vdb import BaselineVDBAgent
 from memory_agents.core.run_agent import run_agent_messages
 from memory_agents.config import (
     LONGMEMEVAL_DIFFICIULTY_LEVEL,
@@ -231,6 +232,8 @@ if __name__ == "__main__":
         agent = asyncio.run(GraphitiAgent().create())
     elif args.agent == "graphiti_vdb":
         agent = asyncio.run(GraphitiChromaDBAgent().create())
+    elif args.agent == "baseline_vdb":
+        agent = asyncio.run(BaselineVDBAgent().create())
     else:
         raise ValueError(f"Invalid agent: {args.agent}")
     subset = []

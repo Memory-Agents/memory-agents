@@ -40,9 +40,9 @@ def setup_teardown_chroma():
 @pytest.mark.asyncio
 async def test_memory_baseline_vdb_agent():
     """Test ChromaDB vector memory with RAG - uses middleware for automatic storage"""
-    from memory_agents.core.agents.baseline_vdb import BaselineAgent
+    from memory_agents.core.agents.baseline_vdb import BaselineVDBAgent
 
-    baseline_vdb_agent = BaselineAgent(persist_directory=TEST_CHROMADB_DIR)
+    baseline_vdb_agent = BaselineVDBAgent(persist_directory=TEST_CHROMADB_DIR)
 
     # --- Conversation 1: Introduce the secret ---
     thread_id_1 = "memory_test_thread_1_baseline_vdb"

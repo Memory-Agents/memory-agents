@@ -21,9 +21,9 @@ async def test_init_graphiti_agent_code():
 
 @pytest.mark.asyncio
 async def test_init_baseline_vdb_agent_code():
-    from memory_agents.core.agents.baseline_vdb import BaselineAgent
+    from memory_agents.core.agents.baseline_vdb import BaselineVDBAgent
 
-    baseline_vdb_agent = BaselineAgent()
+    baseline_vdb_agent = BaselineVDBAgent()
     assert baseline_vdb_agent.agent is not None
 
 
