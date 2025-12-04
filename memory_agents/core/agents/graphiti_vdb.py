@@ -277,7 +277,7 @@ class GraphitiChromaDBAgent(GraphitiBaseAgent, ClearableAgent):
 
     def clear_agent_memory(self):
         self.chroma_manager.clear_collection()
-        self.clear_agent_memory()
+        self.clear_graph()
 
 
 """
