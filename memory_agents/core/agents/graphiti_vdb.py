@@ -1,5 +1,6 @@
 import asyncio
 import threading
+import time
 from typing import Any, Self, List, Dict, Coroutine
 from langchain.agents import create_agent
 from langgraph.checkpoint.memory import InMemorySaver
@@ -162,7 +163,7 @@ class RAGEnhancedAgentMiddleware(AgentMiddleware):
         if reranked_docs:
             rag_context += "\n--- Similar Past Conversations ---\n"
             for i, doc in enumerate(reranked_docs, 1):
-                if i <= 3:      # ranking is more stable than absolute scoring
+                if i <= 3:  # ranking is more stable than absolute scoring
                     timestamp = doc.metadata.get("timestamp", "unknown")
                     rag_context += f"\n[Conversation {i}], date: {timestamp}):\n"
                     rag_context += f"{doc.page_content}\n"
@@ -209,7 +210,7 @@ class GraphitiChromaDBStorageMiddleware(AgentMiddleware):
         fut = asyncio.run_coroutine_threadsafe(task, self.loop)
         return fut.result()
 
-    def before_model(
+    def before_agent(
         self, state: AgentState, runtime: Runtime
     ) -> dict[str, Any] | None:
         # Capture user message before model processes it
@@ -223,9 +224,10 @@ class GraphitiChromaDBStorageMiddleware(AgentMiddleware):
                 self.pending_user_message = msg.content
                 break
 
+        time.sleep(10)
         return None
 
-    def after_model(self, state: AgentState, runtime: Runtime) -> dict[str, Any] | None:
+    def after_agent(self, state: AgentState, runtime: Runtime) -> dict[str, Any] | None:
         """Stores complete conversation turn after model response"""
 
         if not self.pending_user_message:

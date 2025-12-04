@@ -31,9 +31,9 @@ async def test_query_graphiti_agent():
 
 @pytest.mark.asyncio
 async def test_query_baseline_vdb_agent():
-    from memory_agents.core.agents.baseline_vdb import BaselineAgent
+    from memory_agents.core.agents.baseline_vdb import BaselineVDBAgent
 
-    baseline_vdb_agent = BaselineAgent()
+    baseline_vdb_agent = BaselineVDBAgent()
     thread_id = "1"
     response = await run_agent(baseline_vdb_agent.agent, "Hello World!", thread_id)
     assert response is not None
