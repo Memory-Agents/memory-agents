@@ -21,7 +21,7 @@ defaults:
     shell: bash
 
 jobs:
-  evaluate-graphiti-vdb:
+  evaluate-baseline-vdb:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
