@@ -10,6 +10,7 @@ from langchain.agents.middleware import (
 )
 from langgraph.runtime import Runtime
 
+from memory_agents.core.agents.clearable_agent import ClearableAgent
 from memory_agents.core.agents.graphiti_base_agent import GraphitiBaseAgent
 from memory_agents.config import BASELINE_MODEL_NAME
 from langchain_core.messages import HumanMessage
@@ -153,7 +154,7 @@ class GraphitiAgentMiddleware(AgentMiddleware):
         return None
 
 
-class GraphitiAgent(GraphitiBaseAgent):
+class GraphitiAgent(GraphitiBaseAgent, ClearableAgent):
     def __init__(self):
         self.agent = None
 
@@ -170,3 +171,6 @@ class GraphitiAgent(GraphitiBaseAgent):
             middleware=[GraphitiAgentMiddleware(graphiti_tools_all)],
         )
         return self
+
+    def clear_agent_memory(self):
+        self.clear_agent_memory()

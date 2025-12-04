@@ -12,6 +12,7 @@ from langchain_core.documents import Document
 from langgraph.runtime import Runtime
 from langchain_core.tools import BaseTool
 
+from memory_agents.core.agents.clearable_agent import ClearableAgent
 from memory_agents.core.agents.graphiti_base_agent import GraphitiBaseAgent
 from memory_agents.core.chroma_db_manager import ChromaDBManager
 from memory_agents.core.config import BASELINE_MODEL_NAME, GRAPHITI_VDB_CHROMADB_DIR
@@ -226,7 +227,7 @@ class GraphitiChromaDBStorageMiddleware(AgentMiddleware):
         return None
 
 
-class GraphitiChromaDBAgent(GraphitiBaseAgent):
+class GraphitiChromaDBAgent(GraphitiBaseAgent, ClearableAgent):
     """Agent combining Graphiti and ChromaDB for hybrid RAG"""
 
     def __init__(self):
@@ -273,6 +274,10 @@ class GraphitiChromaDBAgent(GraphitiBaseAgent):
             return []
 
         return self.chroma_manager.search_conversations(query, n_results)
+
+    def clear_agent_memory(self):
+        self.chroma_manager.clear_collection()
+        self.clear_agent_memory()
 
 
 """

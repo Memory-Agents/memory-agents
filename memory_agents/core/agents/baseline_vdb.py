@@ -10,6 +10,7 @@ from langchain_core.documents import Document
 from langchain_core.messages import SystemMessage
 from langgraph.runtime import Runtime
 
+from memory_agents.core.agents.clearable_agent import ClearableAgent
 from memory_agents.core.chroma_db_manager import ChromaDBManager
 from memory_agents.core.config import BASELINE_CHROMADB_DIR, BASELINE_MODEL_NAME
 
@@ -146,7 +147,7 @@ class ChromaDBStorageMiddleware(AgentMiddleware):
         return None
 
 
-class BaselineAgent:
+class BaselineAgent(ClearableAgent):
     """Baseline agent with ChromaDB RAG integration"""
 
     def __init__(self, persist_directory: str = BASELINE_CHROMADB_DIR) -> None:
@@ -180,6 +181,9 @@ class BaselineAgent:
             return []
 
         return self.chroma_manager.search_conversations(query, n_results)
+
+    def clear_agent_memory(self):
+        self.chroma_manager.clear_collection()
 
 
 """
