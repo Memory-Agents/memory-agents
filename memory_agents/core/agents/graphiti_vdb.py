@@ -214,7 +214,7 @@ class RAGEnhancedAgentMiddleware(AgentMiddleware):
 
         # Search in ChromaDB (automatically excludes current message)
         similar_conversations = self.chroma_manager.search_conversations(
-            query, n_results=5
+            query, n_results=20
         )
 
         if not similar_conversations:
