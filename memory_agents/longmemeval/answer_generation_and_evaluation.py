@@ -233,7 +233,7 @@ if __name__ == "__main__":
     elif args.agent == "graphiti_vdb":
         agent = asyncio.run(GraphitiChromaDBAgent().create())
     elif args.agent == "baseline_vdb":
-        agent = asyncio.run(BaselineVDBAgent().create())
+        agent = asyncio.run(BaselineVDBAgent())
     else:
         raise ValueError(f"Invalid agent: {args.agent}")
     subset = []
