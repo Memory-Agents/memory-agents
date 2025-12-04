@@ -182,7 +182,7 @@ class BaselineAgent(ClearableAgent):
 
         return self.chroma_manager.search_conversations(query, n_results)
 
-    def clear_agent_memory(self):
+    async def clear_agent_memory(self):
         self.chroma_manager.clear_collection()
 
 

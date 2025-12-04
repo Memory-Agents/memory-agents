@@ -14,5 +14,5 @@ class BaselineAgent(ClearableAgent):
         )
         self.agent = agent
 
-    def clear_agent_memory(self):
+    async def clear_agent_memory(self):
         pass

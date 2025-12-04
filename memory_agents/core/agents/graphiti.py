@@ -172,5 +172,5 @@ class GraphitiAgent(GraphitiBaseAgent, ClearableAgent):
         )
         return self
 
-    def clear_agent_memory(self):
-        self.clear_graph()
+    async def clear_agent_memory(self):
+        await self.clear_graph()
