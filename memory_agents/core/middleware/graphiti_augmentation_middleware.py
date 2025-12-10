@@ -1,3 +1,4 @@
+import time
 from langchain.agents.middleware import AgentMiddleware
 from typing import Any
 from langchain.agents.middleware import (
@@ -42,9 +43,12 @@ class GraphitiAugmentationMiddleware(AgentMiddleware, ThreadedSyncRunner):
         if not isinstance(ai_message, AIMessage):
             raise ValueError("AI message is not of the right type AIMessage")
 
-        return self._run_async_task(
+        self._run_async_task(
             self._graphiti_augmentation(user_message, ai_message, thread_id)
         )
+        time.sleep(10)
+        return None
+
 
     async def _graphiti_augmentation(self, user_message, ai_message, thread_id):
         await self.graphiti_tools["add_memory"].ainvoke(
