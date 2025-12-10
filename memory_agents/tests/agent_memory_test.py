@@ -119,7 +119,7 @@ async def test_memory_graphiti_agent():
 async def test_memory_graphiti_vdb_agent():
     from memory_agents.core.agents.graphiti_vdb import (
         GRAPHITI_CHROMADB_SYSTEM_PROMPT,
-        GraphitiChromaDBAgent,
+        GraphitiVDBAgent,
         RAGEnhancedAgentMiddleware,
         GraphitiChromaDBStorageMiddleware,
     )
@@ -127,7 +127,7 @@ async def test_memory_graphiti_vdb_agent():
     # Use a subdirectory for this agent's ChromaDB
     graphiti_vdb_chroma_dir = os.path.join(TEST_CHROMADB_DIR, "graphiti_vdb")
 
-    graphiti_vdb_agent = await GraphitiChromaDBAgent.create(
+    graphiti_vdb_agent = await GraphitiVDBAgent.create(
         persist_directory=graphiti_vdb_chroma_dir
     )
     await graphiti_vdb_agent.clear_agent_memory()

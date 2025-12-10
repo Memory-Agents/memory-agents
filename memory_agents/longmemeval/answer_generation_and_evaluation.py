@@ -204,7 +204,7 @@ if __name__ == "__main__":
     import argparse
     from memory_agents.core.agents.baseline import BaselineAgent
     from memory_agents.core.agents.graphiti import GraphitiAgent
-    from memory_agents.core.agents.graphiti_vdb import GraphitiChromaDBAgent
+    from memory_agents.core.agents.graphiti_vdb import GraphitiVDBAgent
 
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -231,7 +231,7 @@ if __name__ == "__main__":
     elif args.agent == "graphiti":
         agent = asyncio.run(GraphitiAgent().create())
     elif args.agent == "graphiti_vdb":
-        agent = asyncio.run(GraphitiChromaDBAgent().create())
+        agent = asyncio.run(GraphitiVDBAgent().create())
     elif args.agent == "baseline_vdb":
         agent = BaselineVDBAgent()
     else:

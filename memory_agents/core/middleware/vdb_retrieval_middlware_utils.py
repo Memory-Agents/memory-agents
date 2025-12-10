@@ -39,7 +39,7 @@ class VDBRetrievalMiddlewareUtils(ABC):
         return reranked_docs
 
     def _build_augmentation_context_message(
-        self, reranked_docs: Sequence[Documents]
+        self, reranked_docs: Sequence[Document]
     ) -> str:
         augmentation_context = ""
 
@@ -49,8 +49,9 @@ class VDBRetrievalMiddlewareUtils(ABC):
         augmentation_context += "\n--- Similar Past Conversations ---\n"
         for i, doc in enumerate(reranked_docs, 1):
             if i <= 3:
-                augmentation_context += f"\n[Conversation {i}]\n"
-                augmentation_context += f"{doc}\n"
+                timestamp = doc.metadata.get("timestamp", "unknown")
+                augmentation_context += f"\n[Conversation {i}], date: {timestamp}):\n"
+                augmentation_context += f"{doc.page_content}\n"
 
         retrieval_context = f"""
             <retrieved_context>

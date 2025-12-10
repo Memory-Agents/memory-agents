@@ -233,3 +233,15 @@ uv run pytest .
 ## Benchmarking
 
 For detailed instructions on running benchmarks, please refer to the [LongMemEval Execution Guide](memory_agents/longmemeval/README.md).
+
+## Troubleshooting
+
+Agent initialization fails:
+
+````
+n3.12/site-packages/httpx/_transports/default.py", line 118, in map_httpcore_exceptions
+    |     raise mapped_exc(message) from exc
+    | httpx.ConnectError: All connection attempts failed
+````
+
+Solution: Start Docker Compose backend services as instructed.

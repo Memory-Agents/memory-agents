@@ -15,7 +15,7 @@ class VDBRetrievalMiddleware(AgentMiddleware, VDBRetrievalMiddlewareUtils):
     def __init__(self, chroma_manager: ChromaDBManager):
         super().__init__()
         self.chroma_manager: ChromaDBManager = chroma_manager
-        self.reranker: FlashrankRerank = FlashrankRerank(client=None, top_n=5)
+        self.reranker: FlashrankRerank = FlashrankRerank(top_n=5)
 
     def before_model(
         self, state: AgentState, runtime: Runtime

@@ -43,7 +43,7 @@ class BaselineAgent(ClearableAgent):
         Creates a LangChain agent with a basic system prompt and in-memory
         checkpointer for conversation state management.
         """
-        agent = create_agent(
+        agent: Any = create_agent(
             model=BASELINE_MODEL_NAME,
             system_prompt="You are a memory agent that helps the user to solve tasks.",
             checkpointer=InMemorySaver(),

@@ -42,9 +42,9 @@ async def test_query_baseline_vdb_agent():
 
 @pytest.mark.asyncio
 async def test_query_graphiti_vbd_agent():
-    from memory_agents.core.agents.graphiti_vdb import GraphitiChromaDBAgent
+    from memory_agents.core.agents.graphiti_vdb import GraphitiVDBAgent
 
-    graphiti_vbd_agent = await GraphitiChromaDBAgent.create()
+    graphiti_vbd_agent = await GraphitiVDBAgent.create()
     thread_id = "1"
     response = await run_agent(graphiti_vbd_agent.agent, "Hello World!", thread_id)
     assert response is not None
