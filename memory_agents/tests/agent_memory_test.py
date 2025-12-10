@@ -24,7 +24,7 @@ from langgraph.checkpoint.memory import InMemorySaver
 
 load_dotenv()
 
-# Define a secret that the agent should rememfber
+# Define a secret that the agent should remember
 SECRET_CODE = "My favorite color is blue."
 SECRET_QUESTION = "What is my favorite color?"
 SECRET_ANSWER = "blue"

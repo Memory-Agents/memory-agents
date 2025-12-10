@@ -61,15 +61,11 @@ class GraphitiRetrievalMiddlewareUtils(ThreadedSyncRunner):
         nodes = await self.graphiti_tools["search_nodes"].ainvoke(
             {
                 "query": graphiti_query,
-                "group_id": thread_id,
-                "sync": "True",
             }
         )
         memory_facts = await self.graphiti_tools["search_memory_facts"].ainvoke(
             {
                 "query": graphiti_query,
-                "group_id": thread_id,
-                "sync": "True",
             }
         )
         return nodes, memory_facts

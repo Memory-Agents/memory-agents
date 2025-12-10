@@ -50,20 +50,16 @@ class GraphitiAugmentationMiddleware(AgentMiddleware, ThreadedSyncRunner):
         return None
 
 
-    async def _graphiti_augmentation(self, user_message, ai_message, thread_id):
+    async def _graphiti_augmentation(self, user_message: HumanMessage, ai_message: AIMessage, thread_id: str):
         await self.graphiti_tools["add_memory"].ainvoke(
             {
                 "name": "User Message",
                 "episode_body": user_message.content,
-                "group_id": thread_id,
-                "sync": "True",
             }
         )
         await self.graphiti_tools["add_memory"].ainvoke(
             {
                 "name": "AI Message",
                 "episode_body": ai_message.content,
-                "group_id": thread_id,
-                "sync": "True",
             }
         )

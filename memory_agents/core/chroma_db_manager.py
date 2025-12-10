@@ -27,7 +27,7 @@ class ChromaDBManager:
         )
 
     def add_conversation_turn(
-        self, user_message: str, ai_message: str, metadata: Dict[str, Any] = None
+        self, user_message: str, ai_message: str, metadata: Dict[str, Any] | None = None
     ) -> None:
         """Adds a complete conversation turn (user + assistant) to ChromaDB"""
         self.message_counter += 1
