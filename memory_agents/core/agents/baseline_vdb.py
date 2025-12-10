@@ -1,3 +1,21 @@
+# -*- coding: utf-8 -*-
+"""Baseline agent with ChromaDB vector database integration.
+
+This module provides a memory agent implementation that uses ChromaDB for
+persistent conversation storage and retrieval. It includes middleware for
+RAG (Retrieval-Augmented Generation) functionality and automatic conversation
+history management.
+
+Example:
+    Creating and using a baseline VDB agent:
+
+    >>> from memory_agents.core.agents.baseline_vdb import BaselineVDBAgent
+    >>> agent = BaselineVDBAgent()
+    >>> stats = agent.get_chromadb_stats()
+    >>> print(f"Database stats: {stats}")
+
+"""
+
 from typing import Any, Dict, List
 from langchain.agents import create_agent
 from langgraph.checkpoint.memory import InMemorySaver
@@ -35,9 +53,27 @@ Return only Step 2 to the user.
 
 
 class RAGEnhancedAgentMiddleware(AgentMiddleware):
-    """Middleware that enriches context with ChromaDB results BEFORE response"""
+    """Middleware that enriches context with ChromaDB results BEFORE response.
+
+    This middleware searches ChromaDB for similar past conversations and injects
+    relevant context into the agent's state before the model processes the request.
+    It uses FlashrankRerank to improve the relevance of retrieved conversations.
+
+    Attributes:
+        chroma_manager: The ChromaDB manager for conversation storage and retrieval.
+        reranker: The FlashrankRerank for improving search result relevance.
+
+    Example:
+        >>> middleware = RAGEnhancedAgentMiddleware(chroma_manager)
+        >>> # Middleware will automatically enrich context during agent execution
+    """
 
     def __init__(self, chroma_manager: ChromaDBManager):
+        """Initialize the RAG enhancement middleware.
+
+        Args:
+            chroma_manager: The ChromaDB manager instance for searching conversations.
+        """
         super().__init__()
         self.chroma_manager = chroma_manager
         self.reranker = FlashrankRerank(top_n=5)
@@ -45,6 +81,19 @@ class RAGEnhancedAgentMiddleware(AgentMiddleware):
     def before_model(
         self, state: AgentState, runtime: Runtime
     ) -> dict[str, Any] | None:
+        """Enrich agent context with relevant past conversations.
+
+        Searches ChromaDB for conversations similar to the current user message,
+        reranks the results for relevance, and injects the top results as context
+        into the agent's state before model processing.
+
+        Args:
+            state: The current agent state containing messages.
+            runtime: The LangGraph runtime instance.
+
+        Returns:
+            None if state is modified in-place, otherwise a dictionary of updates.
+        """
         # State is a dict with 'messages' key
         messages = state.get("messages", [])
         if not messages:
@@ -99,9 +148,27 @@ class RAGEnhancedAgentMiddleware(AgentMiddleware):
 
 
 class ChromaDBStorageMiddleware(AgentMiddleware):
-    """Middleware that stores complete conversation in ChromaDB AFTER response"""
+    """Middleware that stores complete conversation in ChromaDB AFTER response.
+
+    This middleware captures user messages before model processing and stores
+    the complete conversation turn (user message + assistant response) in
+    ChromaDB after the model generates its response.
+
+    Attributes:
+        chroma_manager: The ChromaDB manager for conversation storage.
+        pending_user_message: The user message awaiting storage after response.
+
+    Example:
+        >>> middleware = ChromaDBStorageMiddleware(chroma_manager)
+        >>> # Middleware will automatically store conversations after each turn
+    """
 
     def __init__(self, chroma_manager: ChromaDBManager):
+        """Initialize the ChromaDB storage middleware.
+
+        Args:
+            chroma_manager: The ChromaDB manager instance for storing conversations.
+        """
         super().__init__()
         self.chroma_manager = chroma_manager
         self.pending_user_message = None
@@ -109,6 +176,15 @@ class ChromaDBStorageMiddleware(AgentMiddleware):
     def before_model(
         self, state: AgentState, runtime: Runtime
     ) -> dict[str, Any] | None:
+        """Capture user message before model processing.
+
+        Args:
+            state: The current agent state containing messages.
+            runtime: The LangGraph runtime instance.
+
+        Returns:
+            None - this method only captures the user message for later storage.
+        """
         # Capture user message before model processes it
         messages = state.get("messages", [])
         if not messages:
@@ -123,8 +199,18 @@ class ChromaDBStorageMiddleware(AgentMiddleware):
         return None
 
     def after_model(self, state: AgentState, runtime: Runtime) -> dict[str, Any] | None:
-        """Stores complete conversation turn after model response"""
+        """Stores complete conversation turn after model response.
 
+        Stores the captured user message along with the assistant's response
+        in ChromaDB as a complete conversation turn with metadata.
+
+        Args:
+            state: The current agent state containing messages.
+            runtime: The LangGraph runtime instance.
+
+        Returns:
+            None - this method only stores the conversation in ChromaDB.
+        """
         if not self.pending_user_message:
             return None
 
@@ -153,9 +239,29 @@ class ChromaDBStorageMiddleware(AgentMiddleware):
 
 
 class BaselineVDBAgent(ClearableAgent):
-    """Baseline agent with ChromaDB RAG integration"""
+    """Baseline agent with ChromaDB RAG integration.
+
+    This agent combines ChromaDB vector database storage with RAG (Retrieval-Augmented
+    Generation) capabilities. It automatically stores conversations and retrieves
+    relevant past context during conversations.
+
+    Attributes:
+        agent: The underlying LangChain agent with middleware.
+        chroma_manager: The ChromaDB manager for conversation storage and retrieval.
+
+    Example:
+        >>> agent = BaselineVDBAgent()
+        >>> stats = agent.get_chromadb_stats()
+        >>> print(f"Database stats: {stats}")
+        >>> results = agent.search_past_conversations("python", n_results=3)
+    """
 
     def __init__(self, persist_directory: str = BASELINE_CHROMADB_DIR) -> None:
+        """Initialize the baseline VDB agent.
+
+        Args:
+            persist_directory: Directory path for ChromaDB persistence.
+        """
         self.chroma_manager = ChromaDBManager(persist_directory)
 
         agent = create_agent(
@@ -170,7 +276,11 @@ class BaselineVDBAgent(ClearableAgent):
         self.agent = agent
 
     def get_chromadb_stats(self) -> Dict[str, int]:
-        """Returns ChromaDB statistics"""
+        """Returns ChromaDB statistics.
+
+        Returns:
+            Dictionary containing database statistics like total conversation turns.
+        """
         if not self.chroma_manager:
             return {}
 
@@ -181,13 +291,22 @@ class BaselineVDBAgent(ClearableAgent):
     def search_past_conversations(
         self, query: str, n_results: int = 5
     ) -> List[Dict[str, Any]]:
-        """Allows manual search in past conversations"""
+        """Allows manual search in past conversations.
+
+        Args:
+            query: Search query for finding relevant conversations.
+            n_results: Maximum number of results to return.
+
+        Returns:
+            List of conversation dictionaries matching the search query.
+        """
         if not self.chroma_manager:
             return []
 
         return self.chroma_manager.search_conversations(query, n_results)
 
     async def clear_agent_memory(self):
+        """Clear all stored conversations from ChromaDB."""
         self.chroma_manager.clear_collection()
 
 

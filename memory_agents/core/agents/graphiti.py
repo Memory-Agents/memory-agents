@@ -1,3 +1,19 @@
+# -*- coding: utf-8 -*-
+"""Graphiti knowledge graph agent implementation.
+
+This module provides a memory agent that integrates with Graphiti knowledge graph
+for structured memory storage and retrieval. It includes middleware for automatic
+episode insertion and tools for knowledge graph querying.
+
+Example:
+    Creating and using a Graphiti agent:
+
+    >>> from memory_agents.core.agents.graphiti import GraphitiAgent
+    >>> agent = await GraphitiAgent.create()
+    >>> # Agent is ready for use with Graphiti knowledge graph
+
+"""
+
 import asyncio
 import threading
 import time
@@ -118,9 +134,29 @@ Do not hallucinate memory. Only use information returned by Graphiti.
 
 
 class GraphitiAgentMiddleware(AgentMiddleware):
-    """Middleware that inserts user messages into Graphiti AFTER the LLM response"""
+    """Middleware that inserts user messages into Graphiti AFTER the LLM response.
+
+    This middleware manages the insertion of user messages into the Graphiti
+    knowledge graph as episodes. It runs an async event loop in a separate thread
+    to handle Graphiti operations synchronously within the middleware flow.
+
+    Attributes:
+        pending_user_message: Currently not used, kept for compatibility.
+        graphiti_tools: Dictionary of Graphiti MCP tools for graph operations.
+        loop: Asyncio event loop running in a separate thread.
+        thread: Daemon thread that runs the asyncio event loop.
+
+    Example:
+        >>> middleware = GraphitiAgentMiddleware(graphiti_tools)
+        >>> # Middleware will automatically insert messages into Graphiti
+    """
 
     def __init__(self, graphiti_tools: dict[str, BaseTool]):
+        """Initialize the Graphiti agent middleware.
+
+        Args:
+            graphiti_tools: Dictionary of Graphiti MCP tools for graph operations.
+        """
         super().__init__()
         self.pending_user_message = None
         self.graphiti_tools = graphiti_tools
@@ -129,16 +165,37 @@ class GraphitiAgentMiddleware(AgentMiddleware):
         self.thread.start()
 
     def _start_loop(self):
+        """Start the asyncio event loop in a separate thread."""
         asyncio.set_event_loop(self.loop)
         self.loop.run_forever()
 
     def _run_async_task(self, task: Coroutine):
+        """Run an async task in the separate event loop thread.
+
+        Args:
+            task: The coroutine to run in the event loop.
+
+        Returns:
+            The result of the coroutine execution.
+        """
         fut = asyncio.run_coroutine_threadsafe(task, self.loop)
         return fut.result()
 
     def before_agent(
         self, state: AgentState, runtime: Runtime
     ) -> dict[str, Any] | None:
+        """Insert user messages into Graphiti before agent processing.
+
+        Clears the graph and inserts all human messages from the current state
+        as episodes into the Graphiti knowledge graph.
+
+        Args:
+            state: The current agent state containing messages.
+            runtime: The LangGraph runtime instance.
+
+        Returns:
+            None - this method only performs Graphiti operations.
+        """
         self._run_async_task(
             self.graphiti_tools["clear_graph"].ainvoke({"group_ids": ["main"]})
         )
@@ -157,11 +214,36 @@ class GraphitiAgentMiddleware(AgentMiddleware):
 
 
 class GraphitiAgent(GraphitiBaseAgent, ClearableAgent):
+    """Graphiti knowledge graph agent with memory management.
+
+    This agent integrates with Graphiti knowledge graph for structured memory
+    storage and retrieval. It uses MCP tools for graph operations and includes
+    middleware for automatic episode insertion.
+
+    Attributes:
+        agent: The underlying LangChain agent with Graphiti tools and middleware.
+
+    Example:
+        >>> agent = await GraphitiAgent.create()
+        >>> # Agent is ready for use with Graphiti knowledge graph
+        >>> await agent.clear_agent_memory()  # Clear graph data
+    """
+
     def __init__(self):
+        """Initialize the Graphiti agent."""
         self.agent = None
 
     @classmethod
     async def create(cls) -> Self:
+        """Create and initialize the Graphiti agent.
+
+        This factory method sets up the Graphiti MCP tools, creates the agent
+        with appropriate system prompt, and configures middleware for automatic
+        episode insertion.
+
+        Returns:
+            An initialized GraphitiAgent instance ready for use.
+        """
         self = cls()
         graphiti_tools = await self._get_graphiti_mcp_tools()
         graphiti_tools_all = await self._get_graphiti_mcp_tools(exclude=[])
@@ -175,4 +257,5 @@ class GraphitiAgent(GraphitiBaseAgent, ClearableAgent):
         return self
 
     async def clear_agent_memory(self):
+        """Clear all data from the Graphiti knowledge graph."""
         await self.clear_graph()

@@ -1,3 +1,21 @@
+# -*- coding: utf-8 -*-
+"""Hybrid Graphiti and ChromaDB agent implementation.
+
+This module provides a memory agent that combines Graphiti knowledge graph
+with ChromaDB vector database for hybrid RAG (Retrieval-Augmented Generation)
+capabilities. It leverages both structured knowledge graph relationships and
+semantic similarity search for comprehensive memory retrieval.
+
+Example:
+    Creating and using a hybrid agent:
+
+    >>> from memory_agents.core.agents.graphiti_vdb import GraphitiChromaDBAgent
+    >>> agent = await GraphitiChromaDBAgent.create()
+    >>> stats = agent.get_chromadb_stats()
+    >>> print(f"Database stats: {stats}")
+
+"""
+
 import asyncio
 import threading
 import time
@@ -115,9 +133,27 @@ Do not hallucinate memory. Only use information returned by Graphiti and ChromaD
 
 
 class RAGEnhancedAgentMiddleware(AgentMiddleware):
-    """Middleware that enriches context with ChromaDB results BEFORE response"""
+    """Middleware that enriches context with ChromaDB results BEFORE response.
+
+    This middleware searches ChromaDB for similar past conversations and injects
+    relevant context into the agent's state before the model processes the request.
+    It uses FlashrankRerank to improve the relevance of retrieved conversations.
+
+    Attributes:
+        chroma_manager: The ChromaDB manager for conversation storage and retrieval.
+        reranker: The FlashrankRerank for improving search result relevance.
+
+    Example:
+        >>> middleware = RAGEnhancedAgentMiddleware(chroma_manager)
+        >>> # Middleware will automatically enrich context during agent execution
+    """
 
     def __init__(self, chroma_manager: ChromaDBManager):
+        """Initialize the RAG enhancement middleware.
+
+        Args:
+            chroma_manager: The ChromaDB manager instance for searching conversations.
+        """
         super().__init__()
         self.chroma_manager = chroma_manager
         self.reranker = FlashrankRerank(top_n=5)
@@ -125,6 +161,19 @@ class RAGEnhancedAgentMiddleware(AgentMiddleware):
     def before_model(
         self, state: AgentState, runtime: Runtime
     ) -> dict[str, Any] | None:
+        """Enrich agent context with relevant past conversations.
+
+        Searches ChromaDB for conversations similar to the current user message,
+        reranks the results for relevance, and injects the top results as context
+        into the agent's state before model processing.
+
+        Args:
+            state: The current agent state containing messages.
+            runtime: The LangGraph runtime instance.
+
+        Returns:
+            None if state is modified in-place, otherwise a dictionary of updates.
+        """
         # State is a dict with 'messages' key
         messages = state.get("messages", [])
         if not messages:
@@ -187,13 +236,35 @@ class RAGEnhancedAgentMiddleware(AgentMiddleware):
 
 
 class GraphitiChromaDBStorageMiddleware(AgentMiddleware):
-    """Middleware that stores complete conversation in both Graphiti and ChromaDB AFTER response"""
+    """Middleware that stores complete conversation in both Graphiti and ChromaDB AFTER response.
+
+    This middleware captures user messages before model processing and stores
+    the complete conversation turn in both Graphiti knowledge graph and ChromaDB
+    after the model generates its response.
+
+    Attributes:
+        chroma_manager: The ChromaDB manager for conversation storage.
+        pending_user_message: The user message awaiting storage after response.
+        graphiti_tools: Dictionary of Graphiti MCP tools for graph operations.
+        loop: Asyncio event loop running in a separate thread.
+        thread: Daemon thread that runs the asyncio event loop.
+
+    Example:
+        >>> middleware = GraphitiChromaDBStorageMiddleware(chroma_manager, graphiti_tools)
+        >>> # Middleware will automatically store conversations in both systems
+    """
 
     def __init__(
         self,
         chroma_manager: ChromaDBManager,
         graphiti_tools: dict[str, BaseTool],
     ):
+        """Initialize the hybrid storage middleware.
+
+        Args:
+            chroma_manager: The ChromaDB manager instance for storing conversations.
+            graphiti_tools: Dictionary of Graphiti MCP tools for graph operations.
+        """
         super().__init__()
         self.chroma_manager = chroma_manager
         self.pending_user_message = None
@@ -203,16 +274,34 @@ class GraphitiChromaDBStorageMiddleware(AgentMiddleware):
         self.thread.start()
 
     def _start_loop(self):
+        """Start the asyncio event loop in a separate thread."""
         asyncio.set_event_loop(self.loop)
         self.loop.run_forever()
 
     def _run_async_task(self, task: Coroutine):
+        """Run an async task in the separate event loop thread.
+
+        Args:
+            task: The coroutine to run in the event loop.
+
+        Returns:
+            The result of the coroutine execution.
+        """
         fut = asyncio.run_coroutine_threadsafe(task, self.loop)
         return fut.result()
 
     def before_agent(
         self, state: AgentState, runtime: Runtime
     ) -> dict[str, Any] | None:
+        """Capture user message before model processing.
+
+        Args:
+            state: The current agent state containing messages.
+            runtime: The LangGraph runtime instance.
+
+        Returns:
+            None - this method only captures the user message for later storage.
+        """
         # Capture user message before model processes it
         messages = state.get("messages", [])
         if not messages:
@@ -228,8 +317,18 @@ class GraphitiChromaDBStorageMiddleware(AgentMiddleware):
         return None
 
     def after_agent(self, state: AgentState, runtime: Runtime) -> dict[str, Any] | None:
-        """Stores complete conversation turn after model response"""
+        """Stores complete conversation turn after model response.
 
+        Stores the captured user message along with the assistant's response
+        in both Graphiti knowledge graph and ChromaDB as a complete conversation turn.
+
+        Args:
+            state: The current agent state containing messages.
+            runtime: The LangGraph runtime instance.
+
+        Returns:
+            None - this method only stores the conversation in both systems.
+        """
         if not self.pending_user_message:
             return None
 
@@ -267,14 +366,43 @@ class GraphitiChromaDBStorageMiddleware(AgentMiddleware):
 
 
 class GraphitiChromaDBAgent(GraphitiBaseAgent, ClearableAgent):
-    """Agent combining Graphiti and ChromaDB for hybrid RAG"""
+    """Agent combining Graphiti and ChromaDB for hybrid RAG.
+
+    This agent provides comprehensive memory management by combining Graphiti
+    knowledge graph for structured relationships with ChromaDB vector database
+    for semantic similarity search. It offers the best of both worlds for
+    memory retrieval and storage.
+
+    Attributes:
+        agent: The underlying LangChain agent with hybrid middleware.
+        chroma_manager: The ChromaDB manager for conversation storage and retrieval.
+
+    Example:
+        >>> agent = await GraphitiChromaDBAgent.create()
+        >>> stats = agent.get_chromadb_stats()
+        >>> print(f"Database stats: {stats}")
+        >>> results = agent.search_past_conversations("python", n_results=3)
+    """
 
     def __init__(self):
+        """Initialize the hybrid agent."""
         self.agent = None
         self.chroma_manager = None
 
     @classmethod
     async def create(cls, persist_directory: str = GRAPHITI_VDB_CHROMADB_DIR) -> Self:
+        """Create and initialize the hybrid agent.
+
+        This factory method sets up both ChromaDB and Graphiti integration,
+        creates the agent with appropriate system prompt, and configures
+        middleware for both storage systems.
+
+        Args:
+            persist_directory: Directory path for ChromaDB persistence.
+
+        Returns:
+            An initialized GraphitiChromaDBAgent instance ready for use.
+        """
         self = cls()
 
         self.chroma_manager = ChromaDBManager(persist_directory)
@@ -297,7 +425,11 @@ class GraphitiChromaDBAgent(GraphitiBaseAgent, ClearableAgent):
         return self
 
     def get_chromadb_stats(self) -> Dict[str, int]:
-        """Returns ChromaDB statistics"""
+        """Returns ChromaDB statistics.
+
+        Returns:
+            Dictionary containing database statistics like total conversation turns.
+        """
         if not self.chroma_manager:
             return {}
 
@@ -308,13 +440,22 @@ class GraphitiChromaDBAgent(GraphitiBaseAgent, ClearableAgent):
     def search_past_conversations(
         self, query: str, n_results: int = 5
     ) -> List[Dict[str, Any]]:
-        """Allows manual search in past conversations"""
+        """Allows manual search in past conversations.
+
+        Args:
+            query: Search query for finding relevant conversations.
+            n_results: Maximum number of results to return.
+
+        Returns:
+            List of conversation dictionaries matching the search query.
+        """
         if not self.chroma_manager:
             return []
 
         return self.chroma_manager.search_conversations(query, n_results)
 
     async def clear_agent_memory(self):
+        """Clear all stored data from both ChromaDB and Graphiti."""
         self.chroma_manager.clear_collection()
         await self.clear_graph()
 

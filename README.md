@@ -1,6 +1,6 @@
 # Memory Augmented Agentic LLM: Initial Setup
 
-This is the initial setup for the ADL project group 14: Memory Augmented Agentic LLM.
+This is the repository of the ADL project group 14: Memory Augmented Agentic LLM.
 
 It consists of service dependencies provided by a Docker Compose configuration and the memory agents backend.
 
@@ -37,7 +37,7 @@ uv sync --all-groups
 
 To run the full stack, you will need to configure environment variables for the different services. This is done by creating a `.env` file from the provided `.env.example` in three different locations. For each of them, you will need to at least provide your `OPENAI_API_KEY`.
 
-1.  **Root Environment:** For the main services like Neo4j and Langfuse, managed by the root Docker Compose file.
+1.  **Root Environment:** For the main service Langfuse, managed by the root Docker Compose file.
 
     ```bash
     # In the project root directory
@@ -69,7 +69,7 @@ OPENAI_API_KEY=your-actual-openai-api-key-here
 
 #### Set environment variables manually (alternative)
 
-As an alternative to using `.env` files, you can export the variables directly in your shell. You will need to do this for each terminal session where you run a part of the application.
+As an alternative to using `.env` files, you can export the variables directly in your shell. You will need to do this for each terminal session where you run a part of the application. However, running the backend services still requires to configure the `docker-compose.yml` in the root directory to read the locally set environment variable.
 
 ```bash
 # Set the OpenAI API key as an environment variable
