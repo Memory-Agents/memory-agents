@@ -1,7 +1,6 @@
 import pytest
 import os
 from memory_agents.core.agents.baseline_vdb import BaselineVDBAgent
-from memory_agents.core.chroma_db_manager import ChromaDBManager
 import shutil
 
 

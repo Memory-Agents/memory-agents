@@ -14,43 +14,11 @@ Example:
 
 """
 
-# -*- coding: utf-8 -*-
-"""Baseline memory agent implementation.
-
-This module provides a basic memory agent implementation without persistent storage.
-The agent uses in-memory checkpointing and serves as a foundation for more advanced
-memory agents with vector database or knowledge graph integration.
-
-Example:
-    Creating and using a baseline agent:
-    
-    >>> from memory_agents.core.agents.baseline import BaselineAgent
-    >>> agent = BaselineAgent()
-    >>> # Agent is ready for use with basic memory functionality
-
-"""
-
-# -*- coding: utf-8 -*-
-"""Baseline memory agent implementation.
-
-This module provides a basic memory agent implementation without persistent storage.
-The agent uses in-memory checkpointing and serves as a foundation for more advanced
-memory agents with vector database or knowledge graph integration.
-
-Example:
-    Creating and using a baseline agent:
-    
-    >>> from memory_agents.core.agents.baseline import BaselineAgent
-    >>> agent = BaselineAgent()
-    >>> # Agent is ready for use with basic memory functionality
-
-"""
-
 from typing import Any
 from langchain.agents import create_agent
 from langgraph.checkpoint.memory import InMemorySaver
 from memory_agents.config import BASELINE_MODEL_NAME
-from memory_agents.core.agents.clearable_agent import ClearableAgent
+from memory_agents.core.agents.interfaces.clearable_agent import ClearableAgent
 
 
 class BaselineAgent(ClearableAgent):
@@ -80,7 +48,7 @@ class BaselineAgent(ClearableAgent):
             system_prompt="You are a memory agent that helps the user to solve tasks.",
             checkpointer=InMemorySaver(),
         )
-        self.agent = agent
+        self.agent: Any = agent
 
     async def clear_agent_memory(self):
         """Clear the agent's in-memory state.

@@ -57,32 +57,38 @@ class GraphitiBaseAgent(ABC):
 
     async def _get_graphiti_mcp_tools(
         self,
-        exclude: list[str] = [
+        is_read_only=True,
+        write_tools=[
             "add_memory",
             "delete_episode",
             "delete_entity_edge",
             "clear_graph",
         ],
     ) -> Any:
-        """Get filtered Graphiti MCP tools.
+        """Get Graphiti MCP tools with optional filtering.
 
-        Retrieves available Graphiti tools and filters out memory-modifying
-        tools to prevent unauthorized data modification. By default, excludes
-        tools that can add, delete, or clear graph data.
+        Retrieves available tools from the Graphiti MCP client and filters them
+        based on the is_read_only parameter. When is_read_only is True, excludes
+        write tools to prevent unintended data modifications.
 
         Args:
-            exclude: List of tool names to exclude from the returned tools.
-                    Defaults to memory-modifying tools.
+            is_read_only: If True, excludes write tools from the parameter list.
+            write_tools: List of tool names to exclude when is_read_only is True.
 
         Returns:
-            Dictionary of filtered Graphiti MCP tools keyed by tool name.
+            Dictionary mapping tool names to their corresponding tool objects.
         """
+        excluded_tools = []
+        if is_read_only:
+            excluded_tools = write_tools
+
         client = self._get_graphiti_client()
 
         tools = await client.get_tools()
 
-        # Remove any tools that modify memory: * `add_episode` * `delete_episode` * `delete_entity_edge` * `clear_graph`
-        filtered_tools = {tool.name: tool for tool in tools if tool.name not in exclude}
+        filtered_tools = {
+            tool.name: tool for tool in tools if tool.name not in excluded_tools
+        }
         return filtered_tools
 
     async def clear_graph(self, group_ids: list[str] | None = None) -> None:
@@ -91,5 +97,5 @@ class GraphitiBaseAgent(ABC):
         Args:
             group_ids: Optional list of group IDs to clear. If not provided, clears the default group.
         """
-        tools = await self._get_graphiti_mcp_tools(exclude=[])
+        tools = await self._get_graphiti_mcp_tools()
         await tools["clear_graph"].ainvoke({"group_ids": group_ids})
