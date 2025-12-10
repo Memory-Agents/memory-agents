@@ -1,0 +1,34 @@
+#!/bin/bash
+# .git/hooks/pre-commit
+# Pre-commit hook to run Ruff and MyPy in a subdirectory
+
+# --- Configuration ---
+# Set your subdirectory here
+SUBDIR="memory_agents"
+
+# --- Run Ruff ---
+echo "Running Ruff on $SUBDIR..."
+uv run ruff format "$SUBDIR"
+RUFF_STATUS=$?
+
+# --- Run MyPy ---
+echo "Running MyPy on $SUBDIR..."
+uv run mypy "$SUBDIR"
+MYPY_STATUS=$?
+
+# --- Check results ---
+if [ $RUFF_STATUS -ne 0 ] || [ $MYPY_STATUS -ne 0 ]; then
+    echo ""
+    echo "🚫 Commit aborted due to lint/type errors."
+    if [ $RUFF_STATUS -ne 0 ]; then
+        echo "- Ruff failed."
+    fi
+    if [ $MYPY_STATUS -ne 0 ]; then
+        echo "- MyPy failed."
+    fi
+    exit 1
+fi
+
+echo "✅ All checks passed."
+exit 0
+
