@@ -8,26 +8,39 @@ from memory_agents.core.utils.agent_state_utils import (
     get_latest_message_from_agent_state,
 )
 from langchain_core.documents import Document
+import logging
 
 
 class VDBRetrievalMiddlewareUtils:
     chroma_manager: ChromaDBManager
     reranker: FlashrankRerank
 
+    def __init__(self):
+        self.logger = logging.getLogger()
+
     def _retrieve_chroma_db_with_user_message(
         self, state: AgentState
-    ) -> Sequence[Document]:
+    ) -> Sequence[Document] | None:
+        logger = logging.getLogger()
+
         human_message_type = MessageType.HUMAN
         message = get_latest_message_from_agent_state(state, human_message_type)
 
-        chroma_query = message.content
+        if not isinstance(message.content, str):
+            chroma_query = str(message.content)
+            self.logger.error(
+                "The retrieved message content is not a str, this might be unexpected behavior"
+            )
+        else:
+            chroma_query = message.content
 
         similar_conversations = self.chroma_manager.search_conversations(
             chroma_query, n_results=20
         )
 
         if not similar_conversations:
-            raise ValueError("No documents could be retrieved from VDB")
+            logger.error("No documents could be retrieved from VDB")
+            return None
 
         docs_to_rerank = [
             Document(
@@ -41,11 +54,12 @@ class VDBRetrievalMiddlewareUtils:
 
     def _build_vdb_augmentation_context_message(
         self, reranked_docs: Sequence[Document]
-    ) -> str:
+    ) -> str | None:
         augmentation_context = ""
 
         if not reranked_docs:
-            raise ValueError("No documents returned from reranker")
+            self.logger.error("No documents returned from reranker")
+            return None
 
         augmentation_context += "\n--- Similar Past Conversations ---\n"
         for i, doc in enumerate(reranked_docs, 1):

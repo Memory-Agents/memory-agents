@@ -1,5 +1,6 @@
 from typing import Any, Tuple
 from langchain.agents.middleware import AgentState
+import logging
 
 from memory_agents.core.utils.agent_state_utils import (
     MessageType,
@@ -13,6 +14,7 @@ class GraphitiRetrievalMiddlewareUtils(ThreadedSyncRunner):
     graphiti_tools: Any
 
     def __init__(self):
+        self.logger = logging.getLogger()
         ThreadedSyncRunner.__init__(self)
 
     def _retrieve_graphiti_with_user_message(
@@ -22,7 +24,13 @@ class GraphitiRetrievalMiddlewareUtils(ThreadedSyncRunner):
         message = get_latest_message_from_agent_state(state, human_message_type)
         thread_id = get_thread_id_in_state(state)
 
-        graphiti_query = message.content
+        if not isinstance(message.content, str):
+            graphiti_query = str(message.content)
+            self.logger.error(
+                "The retrieved message content is not a str, this might be unexpected behavior"
+            )
+        else:
+            graphiti_query = message.content
 
         return self._run_async_task(self._graphiti_retrieval(graphiti_query, thread_id))
 

@@ -3,6 +3,7 @@ from typing import Any
 from langchain.agents.middleware import (
     AgentState,
 )
+from langchain_core.messages.utils import AnyMessage
 from langgraph.runtime import Runtime
 from langchain_core.messages import HumanMessage, AIMessage
 from langchain_core.tools import BaseTool
@@ -18,7 +19,7 @@ from memory_agents.core.utils.sync_runner import ThreadedSyncRunner
 class GraphitiAugmentationMiddleware(AgentMiddleware, ThreadedSyncRunner):
     def __init__(self, graphiti_tools: dict[str, BaseTool]):
         ThreadedSyncRunner.__init__(self)
-        self.pending_user_message = None
+        self.pending_user_message: AnyMessage | None = None
         self.graphiti_tools = graphiti_tools
 
     def before_model(
