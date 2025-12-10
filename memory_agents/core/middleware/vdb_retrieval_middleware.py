@@ -21,7 +21,7 @@ class VDBRetrievalMiddleware(AgentMiddleware, VDBRetrievalMiddlewareUtils):
         self, state: AgentState, runtime: Runtime
     ) -> dict[str, Any] | None:
         documents = self._retrieve_chroma_db_with_user_message(state)
-        retrieval_context = self._build_augmentation_context_message(documents)
+        retrieval_context = self._build_vdb_augmentation_context_message(documents)
 
         system_message = SystemMessage(content=retrieval_context)
         state["messages"].append(system_message)

@@ -39,7 +39,7 @@ class VDBRetrievalMiddlewareUtils:
         reranked_docs = self.reranker.compress_documents(docs_to_rerank, chroma_query)
         return reranked_docs
 
-    def _build_augmentation_context_message(
+    def _build_vdb_augmentation_context_message(
         self, reranked_docs: Sequence[Document]
     ) -> str:
         augmentation_context = ""

@@ -39,7 +39,7 @@ class GraphitiVDBAgent(GraphitiBaseAgent, ClearableAgent):
             system_prompt=BASELINE_MEMORY_PROMPT,
             checkpointer=InMemorySaver(),
             middleware=[
-                GraphitiVDBRetrievalMiddleware(graphiti_tools_all),
+                GraphitiVDBRetrievalMiddleware(graphiti_tools_all, self.chroma_manager),
                 GraphitiAugmentationMiddleware(graphiti_tools_all),
                 VDBAugmentationMiddleware(self.chroma_manager),
             ],

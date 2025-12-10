@@ -19,7 +19,7 @@ class GraphitiRetrievalMiddleware(AgentMiddleware, GraphitiRetrievalMiddlewareUt
         self, state: AgentState, runtime: Runtime
     ) -> dict[str, Any] | None:
         nodes, memory_facts = self._retrieve_graphiti_with_user_message(state)
-        retrieval_context = self._build_augmentation_context_message(
+        retrieval_context = self._build_graphiti_augmentation_context_message(
             (nodes, memory_facts)
         )
 

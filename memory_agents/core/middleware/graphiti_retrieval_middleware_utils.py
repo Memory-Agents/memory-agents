@@ -26,7 +26,7 @@ class GraphitiRetrievalMiddlewareUtils(ThreadedSyncRunner):
 
         return self._run_async_task(self._graphiti_retrieval(graphiti_query, thread_id))
 
-    def _build_augmentation_context_message(
+    def _build_graphiti_augmentation_context_message(
         self, nodes_and_memory_facts: Tuple[str, str]
     ) -> str:
         nodes, memory_facts = nodes_and_memory_facts
