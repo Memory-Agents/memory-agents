@@ -8,7 +8,9 @@ class MessageType(Enum):
     AI = "ai"
 
 
-def get_latest_message_from_agent_state(state: AgentState, type: MessageType):
+def get_latest_message_from_agent_state(
+    state: AgentState, type: MessageType
+) -> AnyMessage:
     """Gets the latest message of a specific type from the agent state.
 
     Args:
@@ -20,13 +22,16 @@ def get_latest_message_from_agent_state(state: AgentState, type: MessageType):
     """
     messages: list[AnyMessage] = state["messages"]
 
-    message = None
+    output_message = None
     for message in reversed(messages):
-        if hasattr(message, "type") and message.type == type:
-            message = message
+        if hasattr(message, "type") and message.type == type.value:
+            output_message = message
             break
 
-    return message
+    if not output_message:
+        raise ValueError("Message could not be found according to given type")
+
+    return output_message
 
 
 def insert_thread_id_in_state(state: AgentState, thread_id: str):
@@ -40,4 +45,4 @@ def get_thread_id_in_state(state: AgentState) -> str:
     """
     TODO: Implement
     """
-    return "TODO"
+    return "1"

@@ -27,7 +27,7 @@ class ChromaDBManager:
         )
 
     def add_conversation_turn(
-        self, user_message: str, assistant_message: str, metadata: Dict[str, Any] = None
+        self, user_message: str, ai_message: str, metadata: Dict[str, Any] = None
     ) -> None:
         """Adds a complete conversation turn (user + assistant) to ChromaDB"""
         self.message_counter += 1
@@ -37,12 +37,12 @@ class ChromaDBManager:
             metadata = {}
 
         # Combine both messages for complete context
-        conversation_text = f"User: {user_message}\n\nAssistant: {assistant_message}"
+        conversation_text = f"User: {user_message}\n\nAssistant: {ai_message}"
 
         metadata.update(
             {
                 "user_message": user_message,
-                "assistant_message": assistant_message,
+                "ai_message": ai_message,
                 "timestamp": timestamp,
                 "turn_id": self.message_counter,
             }

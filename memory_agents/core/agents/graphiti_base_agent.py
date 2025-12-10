@@ -15,14 +15,13 @@ Example:
 
 """
 
-from abc import ABC
 from langchain_mcp_adapters.client import MultiServerMCPClient
 from typing import Any
 
 from memory_agents.core.config import GRAPHITI_MCP_URL
 
 
-class GraphitiBaseAgent(ABC):
+class GraphitiBaseAgent:
     """Base class for Graphiti agents.
 
     This abstract base class provides common functionality for agents that

@@ -5,7 +5,11 @@ from langgraph.checkpoint.memory import InMemorySaver
 from memory_agents.core.agents.interfaces.clearable_agent import ClearableAgent
 from memory_agents.core.agents.graphiti_base_agent import GraphitiBaseAgent
 from memory_agents.core.chroma_db_manager import ChromaDBManager
-from memory_agents.core.config import BASELINE_MEMORY_PROMPT, BASELINE_MODEL_NAME, GRAPHITI_VDB_CHROMADB_DIR
+from memory_agents.core.config import (
+    BASELINE_MEMORY_PROMPT,
+    BASELINE_MODEL_NAME,
+    GRAPHITI_VDB_CHROMADB_DIR,
+)
 from memory_agents.core.middleware.graphiti_augmentation_middleware import (
     GraphitiAugmentationMiddleware,
 )
@@ -15,6 +19,7 @@ from memory_agents.core.middleware.graphiti_vdb_retrieval_middleware import (
 from memory_agents.core.middleware.vdb_augmentation_middleware import (
     VDBAugmentationMiddleware,
 )
+
 
 class GraphitiVDBAgent(GraphitiBaseAgent, ClearableAgent):
     def __init__(self):

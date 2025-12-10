@@ -14,6 +14,7 @@ from memory_agents.core.middleware.graphiti_retrieval_middleware import (
     GraphitiRetrievalMiddleware,
 )
 
+
 class GraphitiAgent(GraphitiBaseAgent, ClearableAgent):
     def __init__(self):
         """Initialize the Graphiti agent."""

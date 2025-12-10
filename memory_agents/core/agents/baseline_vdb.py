@@ -4,7 +4,11 @@ from langgraph.checkpoint.memory import InMemorySaver
 
 from memory_agents.core.agents.interfaces.clearable_agent import ClearableAgent
 from memory_agents.core.chroma_db_manager import ChromaDBManager
-from memory_agents.core.config import BASELINE_CHROMADB_DIR, BASELINE_MEMORY_PROMPT, BASELINE_MODEL_NAME
+from memory_agents.core.config import (
+    BASELINE_CHROMADB_DIR,
+    BASELINE_MEMORY_PROMPT,
+    BASELINE_MODEL_NAME,
+)
 from memory_agents.core.middleware.vdb_augmentation_middleware import (
     VDBAugmentationMiddleware,
 )

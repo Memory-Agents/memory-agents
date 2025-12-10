@@ -8,10 +8,14 @@ from langgraph.runtime import Runtime
 from memory_agents.core.middleware.graphiti_retrieval_middleware_utils import (
     GraphitiRetrievalMiddlewareUtils,
 )
-from memory_agents.core.middleware.vdb_retrieval_middlware_utils import VDBRetrievalMiddlewareUtils
+from memory_agents.core.middleware.vdb_retrieval_middlware_utils import (
+    VDBRetrievalMiddlewareUtils,
+)
 
 
-class GraphitiVDBRetrievalMiddleware(AgentMiddleware, GraphitiRetrievalMiddlewareUtils, VDBRetrievalMiddlewareUtils):
+class GraphitiVDBRetrievalMiddleware(
+    AgentMiddleware, GraphitiRetrievalMiddlewareUtils, VDBRetrievalMiddlewareUtils
+):
     def __init__(self, graphiti_tools: dict[str, BaseTool]):
         super().__init__()
         self.graphiti_tools = graphiti_tools

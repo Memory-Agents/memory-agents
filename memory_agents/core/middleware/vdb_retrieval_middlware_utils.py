@@ -1,15 +1,16 @@
-from abc import ABC
 from typing import Sequence
-from chromadb import Documents
 from langchain.agents.middleware import AgentState
 from langchain_community.document_compressors import FlashrankRerank
 
 from memory_agents.core.chroma_db_manager import ChromaDBManager
-from memory_agents.core.utils import MessageType, get_latest_message_from_agent_state
+from memory_agents.core.utils.agent_state_utils import (
+    MessageType,
+    get_latest_message_from_agent_state,
+)
 from langchain_core.documents import Document
 
 
-class VDBRetrievalMiddlewareUtils(ABC):
+class VDBRetrievalMiddlewareUtils:
     chroma_manager: ChromaDBManager
     reranker: FlashrankRerank
 

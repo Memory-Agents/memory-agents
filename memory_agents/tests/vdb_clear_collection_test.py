@@ -31,17 +31,17 @@ def test_clear_collection_resets_conversations(temp_chroma_dir):
     # Add some dummy conversation turns
     chroma_manager.add_conversation_turn(
         user_message="Hello, how are you?",
-        assistant_message="I'm doing great, thanks for asking!",
+        ai_message="I'm doing great, thanks for asking!",
         metadata={"thread_id": "test_thread_1"},
     )
     chroma_manager.add_conversation_turn(
         user_message="What's the weather like?",
-        assistant_message="I'm sorry, I don't have access to real-time weather information.",
+        ai_message="I'm sorry, I don't have access to real-time weather information.",
         metadata={"thread_id": "test_thread_1"},
     )
     chroma_manager.add_conversation_turn(
         user_message="Tell me a joke.",
-        assistant_message="Why don't scientists trust atoms? Because they make up everything!",
+        ai_message="Why don't scientists trust atoms? Because they make up everything!",
         metadata={"thread_id": "test_thread_2"},
     )
 
@@ -63,7 +63,7 @@ def test_clear_collection_resets_conversations(temp_chroma_dir):
     # Try adding again after clearing to ensure functionality
     chroma_manager.add_conversation_turn(
         user_message="New conversation after clear.",
-        assistant_message="Indeed, a fresh start.",
+        ai_message="Indeed, a fresh start.",
         metadata={"thread_id": "test_thread_3"},
     )
     count_after_re_addition = chroma_manager.conversation_collection.count()
