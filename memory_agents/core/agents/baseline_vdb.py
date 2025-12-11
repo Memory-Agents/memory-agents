@@ -55,24 +55,6 @@ class BaselineVDBAgent(ClearableAgent):
         >>> await agent.clear_agent_memory()  # Clear all stored data
     """
 
-    """A baseline memory agent with vector database integration.
-
-    This agent extends the baseline functionality by integrating with ChromaDB
-    for persistent conversation storage and retrieval. It uses middleware for
-    both augmentation (storing conversations) and retrieval (searching past
-    conversations) to provide long-term memory capabilities.
-
-    Attributes:
-        agent: The underlying LangChain agent instance with VDB middleware.
-        chroma_manager: The ChromaDB manager for conversation storage.
-
-    Example:
-        >>> agent = BaselineVDBAgent("/path/to/db")
-        >>> stats = agent.get_chromadb_stats()
-        >>> results = agent.search_past_conversations("hello")
-        >>> await agent.clear_agent_memory()  # Clear all stored data
-    """
-
     def __init__(self, persist_directory: str = BASELINE_CHROMADB_DIR) -> None:
         """Initialize the baseline VDB agent.
 

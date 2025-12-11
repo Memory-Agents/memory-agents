@@ -12,15 +12,43 @@ import logging
 
 
 class VDBRetrievalMiddlewareUtils:
+    """Utility class providing vector database retrieval functionality.
+
+    This class contains helper methods for retrieving relevant conversations
+    from ChromaDB based on user queries and building context messages for
+    AI responses. It includes reranking to improve result relevance.
+
+    Attributes:
+        chroma_manager (ChromaDBManager): Manager for ChromaDB operations.
+        reranker (FlashrankRerank): Reranking component for improving result relevance.
+        logger: Logger instance for debugging and error reporting.
+    """
+
     chroma_manager: ChromaDBManager
     reranker: FlashrankRerank
 
     def __init__(self):
+        """Initialize the VDB retrieval utilities.
+
+        Sets up the logger instance for debugging and error reporting.
+        """
         self.logger = logging.getLogger()
 
     def _retrieve_chroma_db_with_user_message(
         self, state: AgentState
     ) -> Sequence[Document] | None:
+        """Retrieve relevant conversations from ChromaDB based on the user's latest message.
+
+        This method extracts the latest human message, searches ChromaDB for
+        similar conversations, and reranks the results to prioritize relevance.
+
+        Args:
+            state (AgentState): The current agent state containing messages.
+
+        Returns:
+            Sequence[Document] | None: A sequence of reranked Document objects
+                containing relevant past conversations, or None if no results found.
+        """
         logger = logging.getLogger()
 
         human_message_type = MessageType.HUMAN
@@ -55,6 +83,21 @@ class VDBRetrievalMiddlewareUtils:
     def _build_vdb_augmentation_context_message(
         self, reranked_docs: Sequence[Document]
     ) -> str | None:
+        """Build a context message from reranked conversation documents.
+
+        This method formats the top 3 most relevant past conversations into
+        a structured context message that can be injected into the AI's
+        conversation to provide relevant background information.
+
+        Args:
+            reranked_docs (Sequence[Document]): A sequence of reranked Document
+                objects containing relevant past conversations.
+
+        Returns:
+            str | None: A formatted context message containing the retrieved
+                conversations with timestamps and usage instructions, or None
+                if no documents are available.
+        """
         augmentation_context = ""
 
         if not reranked_docs:

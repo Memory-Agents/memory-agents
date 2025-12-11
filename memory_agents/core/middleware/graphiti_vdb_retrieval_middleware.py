@@ -22,9 +22,30 @@ from memory_agents.core.middleware.vdb_retrieval_middlware_utils import (
 class GraphitiVDBRetrievalMiddleware(
     AgentMiddleware, GraphitiRetrievalMiddlewareUtils, VDBRetrievalMiddlewareUtils
 ):
+    """Middleware for retrieving memories from both Graphiti and vector database.
+
+    This middleware combines memory retrieval from Graphiti knowledge graphs
+    and ChromaDB vector storage, providing comprehensive context by searching
+    both structured and unstructured memory sources. It also includes reranking
+    to prioritize the most relevant results.
+
+    Attributes:
+        chroma_manager (ChromaDBManager): Manager for ChromaDB operations.
+        reranker (FlashrankRerank): Reranking component for improving result relevance.
+        graphiti_tools (dict[str, BaseTool]): Dictionary containing Graphiti tools
+            for memory retrieval operations.
+    """
+
     def __init__(
         self, graphiti_tools: dict[str, BaseTool], chroma_manager: ChromaDBManager
     ):
+        """Initialize the combined Graphiti and VDB retrieval middleware.
+
+        Args:
+            graphiti_tools (dict[str, BaseTool]): Dictionary containing Graphiti tools
+                for memory retrieval operations.
+            chroma_manager (ChromaDBManager): Manager for ChromaDB vector storage operations.
+        """
         super().__init__()
         self.chroma_manager: ChromaDBManager = chroma_manager
         ranker = Ranker()
@@ -34,6 +55,19 @@ class GraphitiVDBRetrievalMiddleware(
     def before_model(
         self, state: AgentState, runtime: Runtime
     ) -> dict[str, Any] | None:
+        """Retrieve and combine memories from both Graphiti and VDB before model processing.
+
+        This method searches both Graphiti and ChromaDB for relevant memories based on
+        the user's latest message, combines the results, and injects them as context
+        to inform the AI's response.
+
+        Args:
+            state (AgentState): The current agent state containing messages.
+            runtime (Runtime): The LangChain runtime instance.
+
+        Returns:
+            dict[str, Any] | None: Always returns None as state is modified in place.
+        """
         nodes, memory_facts = self._retrieve_graphiti_with_user_message(state)
         retrieval_context_graphiti = self._build_graphiti_augmentation_context_message(
             (nodes, memory_facts)

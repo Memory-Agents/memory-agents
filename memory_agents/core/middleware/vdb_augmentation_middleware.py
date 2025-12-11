@@ -15,7 +15,24 @@ from memory_agents.core.utils.message_conversion_utils import (
 
 
 class VDBAugmentationMiddleware(AgentMiddleware):
+    """Middleware for augmenting conversations with vector database storage.
+
+    This middleware captures conversation turns (user and AI messages) and
+    stores them in ChromaDB for future retrieval. It maintains context
+    across conversations by storing each interaction with metadata.
+
+    Attributes:
+        chroma_manager (ChromaDBManager): Manager for ChromaDB operations.
+        pending_user_message: The most recent user message waiting to be
+            processed for storage.
+    """
+
     def __init__(self, chroma_manager: ChromaDBManager):
+        """Initialize the VDB augmentation middleware.
+
+        Args:
+            chroma_manager (ChromaDBManager): Manager for ChromaDB vector storage operations.
+        """
         super().__init__()
         self.chroma_manager = chroma_manager
         self.pending_user_message = None
@@ -23,6 +40,19 @@ class VDBAugmentationMiddleware(AgentMiddleware):
     def before_model(
         self, state: AgentState, runtime: Runtime
     ) -> dict[str, Any] | None:
+        """Extract and store the latest user message before model processing.
+
+        This method captures the most recent human message from the agent state
+        and stores it for later processing in the after_model hook.
+
+        Args:
+            state (AgentState): The current agent state containing messages.
+            runtime (Runtime): The LangChain runtime instance.
+
+        Returns:
+            dict[str, Any] | None: Always returns None as no state modifications
+                are needed.
+        """
         human_message_type = MessageType.HUMAN
         message = get_latest_message_from_agent_state(state, human_message_type)
 
@@ -30,6 +60,23 @@ class VDBAugmentationMiddleware(AgentMiddleware):
         return None
 
     def after_model(self, state: AgentState, runtime: Runtime) -> dict[str, Any] | None:
+        """Store conversation turn in vector database after model response.
+
+        This method pairs the latest AI response with the previously stored
+        user message and stores the complete conversation turn in ChromaDB
+        with relevant metadata for future retrieval.
+
+        Args:
+            state (AgentState): The current agent state containing messages.
+            runtime (Runtime): The LangChain runtime instance.
+
+        Returns:
+            dict[str, Any] | None: Always returns None as no state modifications
+                are needed.
+
+        Raises:
+            ValueError: If the user message could not be retrieved.
+        """
         ai_message_type = MessageType.AI
         ai_message = get_latest_message_from_agent_state(state, ai_message_type)
         user_message = self.pending_user_message
