@@ -1,3 +1,17 @@
+"""Tests for ChromaDB collection clearing functionality.
+
+This module contains tests to verify that the ChromaDB collection can be
+properly cleared and reset. The test ensures that the clear_collection
+method successfully removes all stored conversations while maintaining
+the ability to add new conversations afterward.
+
+The test verifies:
+- Initial empty state of the collection
+- Proper addition of conversation turns
+- Complete clearing of the collection
+- Continued functionality after clearing
+"""
+
 import pytest
 import os
 from memory_agents.core.agents.baseline_vdb import BaselineVDBAgent
@@ -6,7 +20,20 @@ import shutil
 
 @pytest.fixture
 def temp_chroma_dir(tmp_path):
-    """Provides a temporary directory for ChromaDB persistence."""
+    """Provides a temporary directory for ChromaDB persistence.
+
+    Creates a temporary directory for ChromaDB storage during testing
+    and ensures it's cleaned up after the test completes.
+
+    Args:
+        tmp_path: Pytest fixture providing a temporary directory path.
+
+    Yields:
+        str: Path to the temporary ChromaDB directory.
+
+    Side Effects:
+        Creates and removes temporary directory for ChromaDB storage.
+    """
     yield str(tmp_path / "test_chromadb")
     # Clean up the directory after the test
     if os.path.exists(str(tmp_path / "test_chromadb")):
@@ -14,9 +41,29 @@ def temp_chroma_dir(tmp_path):
 
 
 def test_clear_collection_resets_conversations(temp_chroma_dir):
-    """
-    Tests that clear_collection successfully prunes and resets all conversations
-    within the ChromaDB collection.
+    """Test ChromaDB collection clearing and reset functionality.
+
+    Tests that the clear_collection method successfully removes all
+    conversations from the ChromaDB collection and that the collection
+    remains functional for adding new conversations afterward.
+
+    The test follows this sequence:
+    1. Verify initial empty state
+    2. Add multiple conversation turns
+    3. Verify conversations were added
+    4. Clear the collection
+    5. Verify collection is empty
+    6. Add new conversation to verify continued functionality
+
+    Args:
+        temp_chroma_dir: Path to temporary ChromaDB directory from fixture.
+
+    Returns:
+        None: Raises AssertionError if collection clearing fails.
+
+    Raises:
+        AssertionError: If conversation counts don't match expected values
+            at any stage of the test.
     """
     # Initialize BaselineAgent with a temporary persistence directory
     agent = BaselineVDBAgent(persist_directory=temp_chroma_dir)

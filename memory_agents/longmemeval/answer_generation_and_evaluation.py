@@ -1,3 +1,26 @@
+"""LongMemEval Answer Generation and Evaluation Module.
+
+This module provides functionality to generate answers for the LongMemEval dataset
+using various memory agents and evaluate their performance. It supports different
+difficulty levels (easy, medium, hard) and agent types (baseline, graphiti, etc.).
+
+The module handles dataset downloading, answer generation with resumption support,
+and automated evaluation using the official LongMemEval evaluation scripts.
+
+Example:
+    Basic usage with baseline agent:
+
+    >>> from memory_agents.core.agents.baseline import BaselineAgent
+    >>> agent = BaselineAgent()
+    >>> evaluate("easy", agent)
+
+    Using a subset of questions:
+
+    >>> subset = ["q1", "q2", "q3"]
+    >>> evaluate("medium", agent, subset=subset)
+
+"""
+
 import asyncio
 import json
 import os
@@ -8,8 +31,6 @@ from typing import Any
 import requests
 from dotenv import load_dotenv
 
-# Add the workspace root to Python path for absolute imports
-# answer_generation_and_evaluation.py -> longmemeval -> memory_agents -> workspace_root
 workspace_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(workspace_root))
 
@@ -20,7 +41,6 @@ from memory_agents.config import (
     LONGMEMEVAL_URL_MAP,
 )
 
-# Load environment variables from .env file
 load_dotenv()
 
 
@@ -46,7 +66,6 @@ async def generate_answers_with_agent(
 
     total = len(dataset)
 
-    # Check for already processed question IDs
     processed_ids = set()
     if os.path.exists(output_path):
         with open(output_path, "r", encoding="utf-8") as f:
@@ -64,11 +83,9 @@ async def generate_answers_with_agent(
 
     with open(output_path, "a", encoding="utf-8") as out:
         for idx, item in enumerate(dataset, 1):
-            # Skip already processed questions
             if item["question_id"] in processed_ids:
                 continue
 
-            # Use a different thread_id for each question_id
             thread_id = str(item["question_id"])
             if subset and thread_id not in subset:
                 print(f"Skipping question ID: {thread_id} (not in subset)")
@@ -81,20 +98,15 @@ async def generate_answers_with_agent(
                 flush=True,
             )
 
-            # Build messages list
             await agent.clear_agent_memory()
             messages = []
             for date, session in zip(item["haystack_dates"], item["haystack_sessions"]):
-                # Add date information
                 messages.append({"role": "system", "content": f"Date: {date}"})
-                # Add conversation turns within the session (use role as is)
                 for turn in session:
                     messages.append({"role": turn["role"], "content": turn["content"]})
 
-            # Add the final question
             messages.append({"role": "user", "content": item["question"]})
 
-            # Pass all messages to the agent at once
             hypothesis = await run_agent_messages(
                 agent.agent,
                 messages,
@@ -110,7 +122,7 @@ async def generate_answers_with_agent(
                 )
                 + "\n"
             )
-            out.flush()  # Write to disk immediately
+            out.flush()
 
             print("Done ✓")
 
@@ -118,6 +130,27 @@ async def generate_answers_with_agent(
 
 
 def _getDatasetPath(difficulty: str) -> str:
+    """Get the dataset file path for a given difficulty level.
+
+    This internal function maps difficulty levels to their corresponding
+    dataset file names in the data directory.
+
+    Args:
+        difficulty (str): The difficulty level. Must be one of:
+            'easy', 'medium', or 'hard'.
+
+    Returns:
+        str: The relative path to the dataset file.
+
+    Raises:
+        ValueError: If the difficulty level is not one of the supported values.
+
+    Example:
+        >>> _getDatasetPath("easy")
+        'data/longmemeval_oracle.json'
+        >>> _getDatasetPath("medium")
+        'data/longmemeval_s_cleaned.json'
+    """
     base_path = "data/"
     if difficulty == "easy":
         return os.path.join(base_path, "longmemeval_oracle.json")
@@ -132,6 +165,27 @@ def _getDatasetPath(difficulty: str) -> str:
 
 
 def getDatasetPathWithCheck(difficulty: str) -> str:
+    """Get dataset path with automatic download if file doesn't exist.
+
+    This function checks if the dataset file exists locally. If not, it downloads
+    the dataset from the configured URL for the specified difficulty level.
+
+    Args:
+        difficulty (str): The difficulty level. Must be one of:
+            'easy', 'medium', or 'hard'.
+
+    Returns:
+        str: The path to the dataset file (existing or newly downloaded).
+
+    Raises:
+        ValueError: If the difficulty level is invalid.
+        RuntimeError: If the dataset download fails.
+        FileNotFoundError: If the dataset file cannot be created after download.
+
+    Example:
+        >>> path = getDatasetPathWithCheck("easy")
+        >>> print(f"Dataset available at: {path}")
+    """
     dataset_path = _getDatasetPath(difficulty)
     if not os.path.exists(dataset_path):
         # Get URL from config
@@ -154,7 +208,6 @@ def getDatasetPathWithCheck(difficulty: str) -> str:
 
 
 def evaluate(difficulty, agent, no_generation: bool = False, subset: list[str] = []):
-    # Map difficulty to dataset and output file
     dataset_path = getDatasetPathWithCheck(difficulty=difficulty)
     output_file_map = {
         "easy": "my_predictions_oracle.jsonl",
@@ -172,16 +225,13 @@ def evaluate(difficulty, agent, no_generation: bool = False, subset: list[str] =
             )
         )
 
-    # The evaluation script expects to be run from the src/evaluation directory
     eval_dir = os.path.join(os.path.dirname(__file__), "src/evaluation")
-    # Map difficulty to gold file
     gold_file_map = {
         "easy": "../../data/longmemeval_oracle.json",
         "medium": "../../data/longmemeval_s_cleaned.json",
         "hard": "../../data/longmemeval_m_cleaned.json",
     }
     gold_file = gold_file_map[difficulty]
-    # Model name can be changed as needed
     model_name = "gpt-4o"
     print(f"\nRunning evaluation for {difficulty} set...")
     try:
@@ -201,31 +251,52 @@ def evaluate(difficulty, agent, no_generation: bool = False, subset: list[str] =
 
 
 if __name__ == "__main__":
+    """Command-line interface for LongMemEval evaluation.
+    
+    This script can be run directly from the command line to evaluate different
+    agents on the LongMemEval dataset. It supports various agent types and
+    configuration options.
+    
+    Usage:
+        python answer_generation_and_evaluation.py --agent baseline
+        python answer_generation_and_evaluation.py --agent graphiti --no_generation
+        python answer_generation_and_evaluation.py --agent baseline_vdb --subset_path custom_subset.txt
+    
+    Args:
+        --agent: Agent type to use (baseline, graphiti, graphiti_vdb, baseline_vdb)
+        --no_generation: Skip answer generation, only run evaluation
+        --subset_path: Path to file containing question IDs to process
+    """
     import argparse
     from memory_agents.core.agents.baseline import BaselineAgent
     from memory_agents.core.agents.graphiti import GraphitiAgent
     from memory_agents.core.agents.graphiti_vdb import GraphitiVDBAgent
 
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(
+        description="Evaluate memory agents on LongMemEval dataset"
+    )
     parser.add_argument(
         "--agent",
         type=str,
         default="baseline",
         choices=["baseline", "graphiti", "graphiti_vdb", "baseline_vdb"],
+        help="Type of agent to use for evaluation",
     )
     parser.add_argument(
         "--no_generation",
         action="store_true",
         default=False,
+        help="Skip answer generation and only run evaluation on existing predictions",
     )
     parser.add_argument(
         "--subset_path",
         type=str,
         default="subset.txt",
+        help="Path to file containing question IDs to process (one per line)",
     )
     args = parser.parse_args()
 
-    difficulty = LONGMEMEVAL_DIFFICIULTY_LEVEL  # Set difficulty here: "easy", "medium", or "hard"
+    difficulty = LONGMEMEVAL_DIFFICIULTY_LEVEL
     if args.agent == "baseline":
         agent = BaselineAgent()
     elif args.agent == "graphiti":

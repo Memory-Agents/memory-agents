@@ -1,3 +1,21 @@
+"""Tests for agent memory functionality.
+
+This module contains tests to verify that different agent types can properly
+store and retrieve information from their memory systems. The tests use
+middleware components to automatically store conversations and test memory
+retrieval by resetting the agent's in-memory state.
+
+The tests cover:
+- BaselineVDBAgent with ChromaDB vector memory
+- GraphitiAgent with Graphiti memory system
+- GraphitiVDBAgent with combined Graphiti and ChromaDB memory
+
+Each test follows a pattern:
+1. Store information via middleware during conversation
+2. Reset agent's in-memory state
+3. Test retrieval of stored information using only memory systems
+"""
+
 from dotenv import load_dotenv
 import pytest
 import shutil
@@ -35,6 +53,17 @@ TEST_CHROMADB_DIR = "./test_chroma_db"
 
 @pytest.fixture(scope="module", autouse=True)
 def setup_teardown_chroma():
+    """Fixture to set up and tear down ChromaDB test directory.
+
+    Ensures a clean test environment by creating a fresh ChromaDB directory
+    before tests and cleaning it up after tests complete.
+
+    Yields:
+        None: Control is yielded to the test functions.
+
+    Side Effects:
+        Creates TEST_CHROMADB_DIR before tests and removes it after.
+    """
     # Setup: ensure the directory is clean before tests
     if os.path.exists(TEST_CHROMADB_DIR):
         shutil.rmtree(TEST_CHROMADB_DIR)
@@ -49,7 +78,28 @@ def setup_teardown_chroma():
 
 @pytest.mark.asyncio
 async def test_memory_baseline_vdb_agent():
-    """Test ChromaDB vector memory with RAG - uses middleware for automatic storage"""
+    """Test BaselineVDBAgent memory storage and retrieval.
+
+    Tests that the BaselineVDBAgent can store conversations in ChromaDB
+    and retrieve them later when the in-memory state is reset. This test
+    verifies the RAG (Retrieval-Augmented Generation) functionality
+    using middleware for automatic storage and retrieval.
+
+    The test follows this pattern:
+    1. Store a secret message in ChromaDB via middleware
+    2. Reset the agent's in-memory state
+    3. Query the agent about the stored secret
+    4. Verify the answer is retrieved from ChromaDB
+
+    Args:
+        None: Uses module-level fixtures and constants.
+
+    Returns:
+        None: Raises AssertionError if memory retrieval fails.
+
+    Raises:
+        AssertionError: If the secret answer is not found in the response.
+    """
     from memory_agents.core.agents.baseline_vdb import BaselineVDBAgent
 
     baseline_vdb_agent = BaselineVDBAgent(persist_directory=TEST_CHROMADB_DIR)
@@ -86,7 +136,28 @@ async def test_memory_baseline_vdb_agent():
 
 @pytest.mark.asyncio
 async def test_memory_graphiti_agent():
-    """Test ChromaDB vector memory with RAG - uses middleware for automatic storage"""
+    """Test GraphitiAgent memory storage and retrieval.
+
+    Tests that the GraphitiAgent can store conversations in the Graphiti
+    memory system and retrieve them later when the in-memory state is reset.
+    This test verifies the Graphiti knowledge graph functionality using
+    middleware for automatic storage and retrieval.
+
+    The test follows this pattern:
+    1. Store a secret message in Graphiti via middleware
+    2. Reset the agent's in-memory state
+    3. Query the agent about the stored secret
+    4. Verify the answer is retrieved from Graphiti
+
+    Args:
+        None: Uses module-level fixtures and constants.
+
+    Returns:
+        None: Raises AssertionError if memory retrieval fails.
+
+    Raises:
+        AssertionError: If the secret answer is not found in the response.
+    """
     from memory_agents.core.agents.graphiti import GraphitiAgent
 
     graphiti_agent = await GraphitiAgent.create()
@@ -126,7 +197,29 @@ async def test_memory_graphiti_agent():
 
 @pytest.mark.asyncio
 async def test_memory_graphiti_vdb_agent():
-    """Test ChromaDB vector memory with RAG - uses middleware for automatic storage"""
+    """Test GraphitiVDBAgent memory storage and retrieval.
+
+    Tests that the GraphitiVDBAgent can store conversations in both the
+    Graphiti knowledge graph and ChromaDB vector database, and retrieve
+    them later when the in-memory state is reset. This test verifies the
+    combined memory system functionality using middleware for automatic
+    storage and retrieval.
+
+    The test follows this pattern:
+    1. Store a secret message in both memory systems via middleware
+    2. Reset the agent's in-memory state
+    3. Query the agent about the stored secret
+    4. Verify the answer is retrieved from the combined memory systems
+
+    Args:
+        None: Uses module-level fixtures and constants.
+
+    Returns:
+        None: Raises AssertionError if memory retrieval fails.
+
+    Raises:
+        AssertionError: If the secret answer is not found in the response.
+    """
     from memory_agents.core.agents.graphiti_vdb import GraphitiVDBAgent
 
     graphiti_vdb_agent = await GraphitiVDBAgent.create(

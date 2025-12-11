@@ -1,3 +1,17 @@
+"""Tests for Graphiti tools availability and filtering.
+
+This module contains tests to verify that the Graphiti MCP (Model Context Protocol)
+tools are properly filtered and only the appropriate tools are made available to
+agents. The test ensures that dangerous operations like deletion are not exposed
+while necessary query and retrieval tools are available.
+
+The test verifies:
+- Disallowed tools (delete operations) are not present
+- Required tools (search, retrieval) are present
+- Optional diagnostic tools are handled appropriately
+- No unexpected tools are exposed
+"""
+
 import pytest
 
 from memory_agents.core.agents.graphiti_base_agent import GraphitiBaseAgent
@@ -20,6 +34,28 @@ DISALLOWED_TOOLS = {
 
 @pytest.mark.asyncio
 async def test_graphiti_tools_available():
+    """Test Graphiti MCP tools filtering and availability.
+
+    Verifies that the GraphitiBaseAgent properly filters MCP tools to ensure
+    only safe and necessary tools are exposed. This is a security and safety
+    test to prevent agents from accessing destructive operations.
+
+    The test checks:
+    1. Disallowed tools (delete/clear operations) are not present
+    2. Required tools (search/retrieval operations) are present
+    3. Optional diagnostic tools are handled appropriately
+    4. No unexpected tools are exposed beyond the allowed set
+
+    Args:
+        None: Uses module-level constants for allowed/disallowed tools.
+
+    Returns:
+        None: Raises AssertionError if tool filtering is incorrect.
+
+    Raises:
+        AssertionError: If disallowed tools are present, required tools are missing,
+            or unexpected tools are found.
+    """
     agent = GraphitiBaseAgent()
 
     tools = await agent._get_graphiti_mcp_tools()
