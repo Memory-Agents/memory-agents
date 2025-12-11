@@ -21,7 +21,7 @@ The project leverages modern technologies to integrate different AI memory syste
 - **uv**: Fast Python package manager for efficient dependency management and virtual environments
 - **ty**: Reliable and fast type checking for Python typing
 - **LangChain**: Comprehensive framework for building memory-augmented language agents
-- **ChromaDB**: High-performance vector database for semantic search and conversation storage
+- **ChromaDB**: Open-source search and retrieval database for AI applications
 
 ## Evaluation Framework
 
