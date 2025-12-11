@@ -165,49 +165,56 @@ deactivate
 
 ## Folder structure
 
+Tree generated with: `tree -I "__pycache__|.git|.venv|env|build|dist|*.egg-info|*.pyc|*_db|graphiti|longmemeval|__init__.py"`
+
 ```
 .
-├── .github
-│   └── workflows
-│       ├── evaluate_baseline.yml       # Github workflow to evaluate the baseline agent
-│       ├── evaluate_graphiti_vdb.yml   # Github workflow to evaluate the graphiti agent with a vector database
-│       └── evaluate_graphiti.yml       # Github workflow to evaluate the graphiti agent
-├── .vscode
-│   └── settings.json                   # VSCode settings for the project
-├── langfuse                            # Langfuse tracing and analytics
-│   ├── .env.example                    # Langfuse environment file
-│   └── docker-compose.yml              # Docker compose file for running Langfuse
-├── memory_agents                       # The main application directory
+├── LICENSE
+├── README.md
+├── docker-compose-workflow.yml
+├── docker-compose.yml
+├── examples
+│   └── python_docstring_example.py
+├── langfuse
+│   └── docker-compose.yml
+├── memory_agents
+│   ├── README.md
+│   ├── config.py
 │   ├── core
 │   │   ├── agents
-│   │   │   ├── baseline.py             # A simple agent with in-memory message history
-|   |   |   ├── baseline_vdb.py         # A simple agent  that uses a vector database for memory
-│   │   │   ├── graphiti.py             # An agent that uses graphiti for memory
-│   │   │   └── graphiti_vdb.py         # An agent that uses graphiti and a vector database for memory
-│   │   ├── config.py                   # Configuration for the agents
-│   │   └── run_agent.py                # Helper function to run the agents
-│   ├── longmemeval                     # Benchmark for evaluating long-term memory in agents
-│   │   ├── src
-│   │   │   ├── evaluation              # Scripts for evaluating QA and retrieval metrics
-│   │   │   ├── generation              # Scripts for running answer generation
-│   │   │   ├── index_expansion         # Scripts for expanding the index with different methods
-│   │   │   ├── retrieval               # Scripts for running retrieval
-│   │   │   └── utils                   # Utility scripts
-│   │   ├── data                        # Data for the benchmark
-│   │   ├── answerGeneration.py         # Script for generating answers
-│   │   └── README.md
+│   │   │   ├── baseline.py
+│   │   │   ├── baseline_vdb.py
+│   │   │   ├── graphiti.py
+│   │   │   ├── graphiti_base_agent.py
+│   │   │   ├── graphiti_vdb.py
+│   │   │   └── interfaces
+│   │   │       └── clearable_agent.py
+│   │   ├── chroma_db_manager.py
+│   │   ├── config.py
+│   │   ├── middleware
+│   │   │   ├── graphiti_augmentation_middleware.py
+│   │   │   ├── graphiti_retrieval_middleware.py
+│   │   │   ├── graphiti_retrieval_middleware_utils.py
+│   │   │   ├── graphiti_vdb_retrieval_middleware.py
+│   │   │   ├── vdb_augmentation_middleware.py
+│   │   │   ├── vdb_retrieval_middleware.py
+│   │   │   └── vdb_retrieval_middlware_utils.py
+│   │   ├── run_agent.py
+│   │   └── utils
+│   │       ├── agent_state_utils.py
+│   │       ├── message_conversion_utils.py
+│   │       └── sync_runner.py
+│   ├── pyproject.toml
 │   ├── tests
-│   │   ├── agent_initialization_test.py # Tests for agent initialization
-│   │   └── agent_query_test.py         # Tests for querying the agents
-│   ├── main.py                         # Entry point for running the agents
-│   ├── pyproject.toml                  # Project metadata and dependencies
-│   └── README.md                       # README for the memory_agents application
-├── shared                              # Directory for shared files (currently empty)
-├── .env.example                        # Example environment file
-├── docker-compose-workflow.yml         # Docker compose file for running services (light version for running in a Github workflow)
-├── docker-compose.yml                  # Docker compose file for running services
-├── LICENSE                             # Project license
-└── README.md                           # Main README for the project
+│   │   ├── agent_initialization_test.py
+│   │   ├── agent_memory_test.py
+│   │   ├── agent_query_test.py
+│   │   ├── graphiti_tools_available_test.py
+│   │   └── vdb_clear_collection_test.py
+│   ├── ty.toml
+│   └── uv.lock
+├── shared
+└── uv.lock
 ```
 
 ## Git pre-commit hooks
@@ -219,7 +226,7 @@ cd memory_agents
 uv run pre-commit install
 ```
 
-The pre-commit hooks will run automatically before each commit to check formatting, linting, and other code quality standards.
+The pre-commit hooks will run automatically before each commit to check formatting (ruff), linting (ty), and other code quality standards.
 
 ## Python formatting and code quality checks
 
