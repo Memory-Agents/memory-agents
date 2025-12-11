@@ -15,7 +15,7 @@ Example:
 
 """
 
-from langchain_mcp_adapters.client import MultiServerMCPClient
+from langchain_mcp_adapters.client import MultiServerMCPClient, StreamableHttpConnection
 from typing import Any
 
 from memory_agents.core.config import GRAPHITI_MCP_URL
@@ -44,14 +44,10 @@ class GraphitiBaseAgent:
         Returns:
             A configured MultiServerMCPClient instance for Graphiti operations.
         """
-        client = MultiServerMCPClient(
-            {
-                "graphiti": {
-                    "transport": "streamable_http",  # HTTP-based remote server
-                    "url": GRAPHITI_MCP_URL,
-                }
-            }
+        graphiti_connection = StreamableHttpConnection(
+            transport="streamable_http", url=GRAPHITI_MCP_URL
         )
+        client = MultiServerMCPClient({"graphiti": graphiti_connection})
         return client
 
     async def _get_graphiti_mcp_tools(

@@ -9,6 +9,9 @@ from memory_agents.core.utils.agent_state_utils import (
     get_latest_message_from_agent_state,
     get_thread_id_in_state,
 )
+from memory_agents.core.utils.message_conversion_utils import (
+    ensure_message_content_is_str,
+)
 
 
 class VDBAugmentationMiddleware(AgentMiddleware):
@@ -36,9 +39,12 @@ class VDBAugmentationMiddleware(AgentMiddleware):
         if not user_message:
             raise ValueError("Could not retrieve user message.")
 
+        user_message_content = ensure_message_content_is_str(user_message.content)
+        ai_message_content = ensure_message_content_is_str(ai_message.content)
+
         self.chroma_manager.add_conversation_turn(
-            user_message=user_message.content,
-            ai_message=ai_message.content,
+            user_message=user_message_content,
+            ai_message=ai_message_content,
             metadata={
                 "thread_id": thread_id,
             },

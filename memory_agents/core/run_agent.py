@@ -1,5 +1,11 @@
 import logging
+from typing import List
 from dotenv import load_dotenv
+from langchain_core.messages.utils import AnyMessage
+
+from memory_agents.core.utils.message_conversion_utils import (
+    ensure_message_content_is_str,
+)
 
 load_dotenv()
 
@@ -81,8 +87,9 @@ async def run_agent(agent, message: str, thread_id: str) -> str:
     return extract_response_content(response)
 
 
-def extract_response_content(response: dict[str, str]) -> str:
+def extract_response_content(response: dict[str, List[AnyMessage]]) -> str:
     if "messages" in response and len(response["messages"]) > 0:
-        return response["messages"][-1].content
+        response_content = response["messages"][-1].content
+        return ensure_message_content_is_str(response_content)
     else:
         raise ValueError("No messages found in agent response")

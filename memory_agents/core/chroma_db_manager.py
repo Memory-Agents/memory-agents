@@ -1,5 +1,5 @@
 from typing import Any, Dict, List
-from chromadb import Client
+from chromadb import Client, QueryResult
 from chromadb.config import Settings
 from datetime import datetime
 
@@ -68,7 +68,7 @@ class ChromaDBManager:
 
         return self._format_results(results)
 
-    def _format_results(self, results: Dict) -> List[Dict[str, Any]]:
+    def _format_results(self, results: QueryResult) -> List[Dict[str, Any]]:
         """Formats ChromaDB search results"""
         documents = []
         if results["documents"] and results["documents"][0]:

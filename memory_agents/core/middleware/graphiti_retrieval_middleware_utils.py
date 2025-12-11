@@ -7,6 +7,9 @@ from memory_agents.core.utils.agent_state_utils import (
     get_latest_message_from_agent_state,
     get_thread_id_in_state,
 )
+from memory_agents.core.utils.message_conversion_utils import (
+    ensure_message_content_is_str,
+)
 from memory_agents.core.utils.sync_runner import ThreadedSyncRunner
 
 
@@ -24,13 +27,7 @@ class GraphitiRetrievalMiddlewareUtils(ThreadedSyncRunner):
         message = get_latest_message_from_agent_state(state, human_message_type)
         thread_id = get_thread_id_in_state(state)
 
-        if not isinstance(message.content, str):
-            graphiti_query = str(message.content)
-            self.logger.error(
-                "The retrieved message content is not a str, this might be unexpected behavior"
-            )
-        else:
-            graphiti_query = message.content
+        graphiti_query = ensure_message_content_is_str(message.content)
 
         return self._run_async_task(self._graphiti_retrieval(graphiti_query, thread_id))
 
