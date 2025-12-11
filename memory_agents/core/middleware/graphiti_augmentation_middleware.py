@@ -49,8 +49,9 @@ class GraphitiAugmentationMiddleware(AgentMiddleware, ThreadedSyncRunner):
         time.sleep(10)
         return None
 
-
-    async def _graphiti_augmentation(self, user_message: HumanMessage, ai_message: AIMessage, thread_id: str):
+    async def _graphiti_augmentation(
+        self, user_message: HumanMessage, ai_message: AIMessage, thread_id: str
+    ):
         await self.graphiti_tools["add_memory"].ainvoke(
             {
                 "name": "User Message",
