@@ -29,7 +29,7 @@ async def test_init_baseline_vdb_agent_code():
 
 @pytest.mark.asyncio
 async def test_init_graphiti_vdb_agent_code():
-    from memory_agents.core.agents.graphiti_vdb import GraphitiChromaDBAgent
+    from memory_agents.core.agents.graphiti_vdb import GraphitiVDBAgent
 
-    graphiti_vdb_agent = await GraphitiChromaDBAgent.create()
+    graphiti_vdb_agent = await GraphitiVDBAgent.create()
     assert graphiti_vdb_agent.agent is not None

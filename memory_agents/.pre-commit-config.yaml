@@ -1,0 +1,8 @@
+repos:
+  - repo: local
+    hooks:
+      - id: ruff-ty
+        name: Ruff + Ty
+        entry: bash .git-hooks/pre-commit
+        language: system
+        files: \.py$

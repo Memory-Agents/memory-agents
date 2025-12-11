@@ -1,0 +1,2 @@
+[src]
+exclude = ["memory_agents/longmemeval"]

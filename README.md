@@ -1,10 +1,31 @@
-# Memory Augmented Agentic LLM: Initial Setup
+# Memory Augmented Agentic LLM: Comparative AI Memory Architecture Study
 
-This is the repository of the ADL project group 14: Memory Augmented Agentic LLM.
+This repository presents a comprehensive comparative study of different AI memory architectures, implemented as modular middleware systems with comparable prompts and interfaces. The project evaluates various memory approaches including baseline agents, vector database integration, knowledge graph storage, and hybrid solutions to assess their effectiveness in long-term memory retention and retrieval.
 
-It consists of service dependencies provided by a Docker Compose configuration and the memory agents backend.
+## Architecture Overview
 
-The memory agents backend includes the LongMemEval benchmark: https://github.com/xiaowu0162/LongMemEval
+The project implements four distinct memory agent architectures, all built with consistent middleware patterns and comparable system prompts:
+
+- **Baseline Agent** (`memory_agents/core/agents/baseline.py`): Basic memory agent with in-memory checkpointing, serving as the foundation for comparison
+- **Baseline VDB Agent** (`memory_agents/core/agents/baseline_vdb.py`): Enhanced with ChromaDB vector database for persistent conversation storage and semantic search
+- **Graphiti Agent** (`memory_agents/core/agents/graphiti.py`): Knowledge graph-based memory using Graphiti through MCP (Model Context Protocol) for structured entity and relationship storage
+- **Graphiti VDB Agent** (`memory_agents/core/agents/graphiti_vdb.py`): Hybrid approach combining Graphiti knowledge graphs with ChromaDB for comprehensive memory capabilities
+
+## Technology Stack
+
+The project leverages modern technologies optimized for AI memory systems:
+
+- **Docker**: Containerized service orchestration for consistent development and deployment environments
+- **Langfuse**: Advanced tracing and analytics for monitoring agent performance and memory effectiveness
+- **MCP (Model Context Protocol)**: Standardized interface for integrating external tools and services like Graphiti
+- **uv**: Fast Python package manager for efficient dependency management and virtual environments
+- **ty**: Type-safe configuration management for robust agent setup
+- **LangChain**: Comprehensive framework for building memory-augmented language agents
+- **ChromaDB**: High-performance vector database for semantic search and conversation storage
+
+## Evaluation Framework
+
+The project includes automated evaluation through GitHub workflows and the LongMemEval benchmark (https://github.com/xiaowu0162/LongMemEval), providing standardized testing across all memory architectures to ensure fair comparison and measurable performance metrics.
 
 ## Setup
 
@@ -165,50 +186,68 @@ deactivate
 
 ## Folder structure
 
+Tree generated with: `tree -I "__pycache__|.git|.venv|env|build|dist|*.egg-info|*.pyc|*_db|graphiti|longmemeval|__init__.py"`
+
 ```
 .
-├── .github
-│   └── workflows
-│       ├── evaluate_baseline.yml       # Github workflow to evaluate the baseline agent
-│       ├── evaluate_graphiti_vdb.yml   # Github workflow to evaluate the graphiti agent with a vector database
-│       └── evaluate_graphiti.yml       # Github workflow to evaluate the graphiti agent
-├── .vscode
-│   └── settings.json                   # VSCode settings for the project
-├── langfuse                            # Langfuse tracing and analytics
-│   ├── .env.example                    # Langfuse environment file
-│   └── docker-compose.yml              # Docker compose file for running Langfuse
-├── memory_agents                       # The main application directory
+├── LICENSE                           # Project license file
+├── README.md                          # Main project documentation
+├── docker-compose-workflow.yml        # Docker Compose configuration for workflow services
+├── docker-compose.yml                 # Main Docker Compose configuration for all services
+├── examples
+│   └── python_docstring_example.py   # Example demonstrating Python docstring usage
+├── langfuse
+│   └── docker-compose.yml             # Docker Compose configuration for Langfuse tracing service
+├── memory_agents
+│   ├── README.md                      # Memory agents specific documentation
+│   ├── config.py                      # Configuration settings for memory agents
 │   ├── core
 │   │   ├── agents
-│   │   │   ├── baseline.py             # A simple agent with in-memory message history
-|   |   |   ├── baseline_vdb.py         # A simple agent  that uses a vector database for memory
-│   │   │   ├── graphiti.py             # An agent that uses graphiti for memory
-│   │   │   └── graphiti_vdb.py         # An agent that uses graphiti and a vector database for memory
-│   │   ├── config.py                   # Configuration for the agents
-│   │   └── run_agent.py                # Helper function to run the agents
-│   ├── longmemeval                     # Benchmark for evaluating long-term memory in agents
-│   │   ├── src
-│   │   │   ├── evaluation              # Scripts for evaluating QA and retrieval metrics
-│   │   │   ├── generation              # Scripts for running answer generation
-│   │   │   ├── index_expansion         # Scripts for expanding the index with different methods
-│   │   │   ├── retrieval               # Scripts for running retrieval
-│   │   │   └── utils                   # Utility scripts
-│   │   ├── data                        # Data for the benchmark
-│   │   ├── answerGeneration.py         # Script for generating answers
-│   │   └── README.md
+│   │   │   ├── baseline.py            # Baseline agent implementation without memory
+│   │   │   ├── baseline_vdb.py        # Baseline agent with vector database memory
+│   │   │   ├── graphiti.py            # Graphiti-based memory agent implementation
+│   │   │   ├── graphiti_base_agent.py # Base class for Graphiti agents
+│   │   │   ├── graphiti_vdb.py        # Graphiti agent with vector database integration
+│   │   │   └── interfaces
+│   │   │       └── clearable_agent.py # Interface for agents with clearable memory
+│   │   ├── chroma_db_manager.py       # Manages Chroma vector database operations
+│   │   ├── config.py                  # Core configuration settings
+│   │   ├── middleware
+│   │   │   ├── graphiti_augmentation_middleware.py    # Middleware for augmenting responses with Graphiti memory
+│   │   │   ├── graphiti_retrieval_middleware.py       # Middleware for retrieving data from Graphiti
+│   │   │   ├── graphiti_retrieval_middleware_utils.py # Utility functions for Graphiti retrieval
+│   │   │   ├── graphiti_vdb_retrieval_middleware.py   # Graphiti middleware with vector database support
+│   │   │   ├── vdb_augmentation_middleware.py         # Middleware for augmenting responses with vector database
+│   │   │   ├── vdb_retrieval_middleware.py            # Middleware for retrieving data from vector database
+│   │   │   └── vdb_retrieval_middlware_utils.py       # Utility functions for vector database retrieval
+│   │   ├── run_agent.py                # Main script for running memory agents
+│   │   └── utils
+│   │       ├── agent_state_utils.py    # Utilities for managing agent state
+│   │       ├── message_conversion_utils.py # Utilities for converting message formats
+│   │       └── sync_runner.py          # Synchronous runner for agent execution
+│   ├── pyproject.toml                  # Python project configuration and dependencies
 │   ├── tests
 │   │   ├── agent_initialization_test.py # Tests for agent initialization
-│   │   └── agent_query_test.py         # Tests for querying the agents
-│   ├── main.py                         # Entry point for running the agents
-│   ├── pyproject.toml                  # Project metadata and dependencies
-│   └── README.md                       # README for the memory_agents application
-├── shared                              # Directory for shared files (currently empty)
-├── .env.example                        # Example environment file
-├── docker-compose-workflow.yml         # Docker compose file for running services (light version for running in a Github workflow)
-├── docker-compose.yml                  # Docker compose file for running services
-├── LICENSE                             # Project license
-└── README.md                           # Main README for the project
+│   │   ├── agent_memory_test.py        # Tests for agent memory functionality
+│   │   ├── agent_query_test.py         # Tests for agent query processing
+│   │   ├── graphiti_tools_available_test.py # Tests for Graphiti tool availability
+│   │   └── vdb_clear_collection_test.py # Tests for vector database collection clearing
+│   ├── ty.toml                         # Typer configuration for CLI interfaces
+│   └── uv.lock                         # Locked dependency versions for uv package manager
+├── shared                              # Shared utilities and configurations
+└── uv.lock                             # Root-level locked dependency versions
 ```
+
+## Git pre-commit hooks
+
+This project uses pre-commit hooks to ensure code quality. To install them:
+
+```bash
+cd memory_agents
+uv run pre-commit install
+```
+
+The pre-commit hooks will run automatically before each commit to check formatting (ruff), linting (ty), and other code quality standards.
 
 ## Python formatting and code quality checks
 
@@ -233,3 +272,15 @@ uv run pytest .
 ## Benchmarking
 
 For detailed instructions on running benchmarks, please refer to the [LongMemEval Execution Guide](memory_agents/longmemeval/README.md).
+
+## Troubleshooting
+
+Agent initialization fails:
+
+````
+n3.12/site-packages/httpx/_transports/default.py", line 118, in map_httpcore_exceptions
+    |     raise mapped_exc(message) from exc
+    | httpx.ConnectError: All connection attempts failed
+````
+
+Solution: Start Docker Compose backend services as instructed.

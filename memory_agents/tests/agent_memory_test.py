@@ -2,19 +2,29 @@ from dotenv import load_dotenv
 import pytest
 import shutil
 import os
-from memory_agents.core.agents.baseline_vdb import (
-    BASELINE_CHROMADB_SYSTEM_PROMPT,
-    ChromaDBStorageMiddleware,
-    RAGEnhancedAgentMiddleware,
+from memory_agents.core.config import BASELINE_MEMORY_PROMPT, BASELINE_MODEL_NAME
+from memory_agents.core.middleware.graphiti_augmentation_middleware import (
+    GraphitiAugmentationMiddleware,
 )
-from memory_agents.core.config import BASELINE_MODEL_NAME
+from memory_agents.core.middleware.graphiti_retrieval_middleware import (
+    GraphitiRetrievalMiddleware,
+)
+from memory_agents.core.middleware.graphiti_vdb_retrieval_middleware import (
+    GraphitiVDBRetrievalMiddleware,
+)
+from memory_agents.core.middleware.vdb_augmentation_middleware import (
+    VDBAugmentationMiddleware,
+)
+from memory_agents.core.middleware.vdb_retrieval_middleware import (
+    VDBRetrievalMiddleware,
+)
 from memory_agents.core.run_agent import run_agent
 from langchain.agents import create_agent
 from langgraph.checkpoint.memory import InMemorySaver
 
 load_dotenv()
 
-# Define a secret that the agent should rememfber
+# Define a secret that the agent should remember
 SECRET_CODE = "My favorite color is blue."
 SECRET_QUESTION = "What is my favorite color?"
 SECRET_ANSWER = "blue"
@@ -44,7 +54,7 @@ async def test_memory_baseline_vdb_agent():
 
     baseline_vdb_agent = BaselineVDBAgent(persist_directory=TEST_CHROMADB_DIR)
 
-    # --- Conversation 1: Introduce the secret ---
+    # Conversation 1: Introduce the secret
     thread_id_1 = "memory_test_thread_1_baseline_vdb"
 
     await baseline_vdb_agent.clear_agent_memory()
@@ -56,18 +66,18 @@ async def test_memory_baseline_vdb_agent():
     )
     await run_agent(baseline_vdb_agent.agent, "Tell me a joke.", thread_id_1)
 
-    # Reset InMemory to test ChromaDB-only retrieval
+    # Reset InMemory to test memory-only retrieval
     baseline_vdb_agent.agent = create_agent(
         model=BASELINE_MODEL_NAME,
-        system_prompt=BASELINE_CHROMADB_SYSTEM_PROMPT,
+        system_prompt=BASELINE_MEMORY_PROMPT,
         checkpointer=InMemorySaver(),
         middleware=[
-            RAGEnhancedAgentMiddleware(baseline_vdb_agent.chroma_manager),
-            ChromaDBStorageMiddleware(baseline_vdb_agent.chroma_manager),
+            VDBRetrievalMiddleware(baseline_vdb_agent.chroma_manager),
+            VDBAugmentationMiddleware(baseline_vdb_agent.chroma_manager),
         ],
     )
 
-    # --- Conversation 2: Test memory retrieval ---
+    # Conversation 2: Test memory retrieval
     response = await run_agent(baseline_vdb_agent.agent, SECRET_QUESTION, thread_id_1)
 
     # Verify memory retrieval
@@ -76,17 +86,15 @@ async def test_memory_baseline_vdb_agent():
 
 @pytest.mark.asyncio
 async def test_memory_graphiti_agent():
-    from memory_agents.core.agents.graphiti import (
-        GRAPHITI_SYSTEM_PROMPT,
-        GraphitiAgent,
-        GraphitiAgentMiddleware,
-    )
+    """Test ChromaDB vector memory with RAG - uses middleware for automatic storage"""
+    from memory_agents.core.agents.graphiti import GraphitiAgent
 
     graphiti_agent = await GraphitiAgent.create()
-    await graphiti_agent.clear_agent_memory()
 
-    # --- Conversation 1: Introduce the secret ---
-    thread_id_1 = "memory_test_thread_1_graphiti"
+    # Conversation 1: Introduce the secret
+    thread_id_1 = "memory_test_thread_1_baseline_vdb"
+
+    await graphiti_agent.clear_agent_memory()
 
     # Store conversations via middleware
     await run_agent(graphiti_agent.agent, SECRET_CODE, thread_id_1)
@@ -95,45 +103,40 @@ async def test_memory_graphiti_agent():
     )
     await run_agent(graphiti_agent.agent, "Tell me a joke.", thread_id_1)
 
-    # Reinitialize agent
-    graphiti_tools = await graphiti_agent._get_graphiti_mcp_tools()
-    graphiti_tools_all = await graphiti_agent._get_graphiti_mcp_tools(exclude=[])
+    # Reset InMemory to test memory-only retrieval
+    graphiti_tools_all = await graphiti_agent._get_graphiti_mcp_tools(
+        is_read_only=False
+    )
     graphiti_agent.agent = create_agent(
         model=BASELINE_MODEL_NAME,
-        system_prompt=GRAPHITI_SYSTEM_PROMPT,
+        system_prompt=BASELINE_MEMORY_PROMPT,
         checkpointer=InMemorySaver(),
-        tools=list(graphiti_tools.values()),
-        middleware=[GraphitiAgentMiddleware(graphiti_tools_all)],
+        middleware=[
+            GraphitiAugmentationMiddleware(graphiti_tools_all),
+            GraphitiRetrievalMiddleware(graphiti_tools_all),
+        ],
     )
 
-    # --- Conversation 2: Test memory retrieval ---
+    # Conversation 2: Test memory retrieval
     response = await run_agent(graphiti_agent.agent, SECRET_QUESTION, thread_id_1)
 
-    # Assert that the agent remembers the secret
-    assert SECRET_ANSWER.lower() in response.lower(), (
-        f"Expected '{SECRET_ANSWER}' but got: {response}"
-    )
+    # Verify memory retrieval
+    assert SECRET_ANSWER.lower() in response.lower()
 
 
 @pytest.mark.asyncio
 async def test_memory_graphiti_vdb_agent():
-    from memory_agents.core.agents.graphiti_vdb import (
-        GRAPHITI_CHROMADB_SYSTEM_PROMPT,
-        GraphitiChromaDBAgent,
-        RAGEnhancedAgentMiddleware,
-        GraphitiChromaDBStorageMiddleware,
+    """Test ChromaDB vector memory with RAG - uses middleware for automatic storage"""
+    from memory_agents.core.agents.graphiti_vdb import GraphitiVDBAgent
+
+    graphiti_vdb_agent = await GraphitiVDBAgent.create(
+        persist_directory=TEST_CHROMADB_DIR
     )
 
-    # Use a subdirectory for this agent's ChromaDB
-    graphiti_vdb_chroma_dir = os.path.join(TEST_CHROMADB_DIR, "graphiti_vdb")
+    # Conversation 1: Introduce the secret
+    thread_id_1 = "memory_test_thread_1_baseline_vdb"
 
-    graphiti_vdb_agent = await GraphitiChromaDBAgent.create(
-        persist_directory=graphiti_vdb_chroma_dir
-    )
     await graphiti_vdb_agent.clear_agent_memory()
-
-    # --- Conversation 1: Introduce the secret ---
-    thread_id_1 = "memory_test_thread_1_graphiti_vdb"
 
     # Store conversations via middleware
     await run_agent(graphiti_vdb_agent.agent, SECRET_CODE, thread_id_1)
@@ -142,26 +145,24 @@ async def test_memory_graphiti_vdb_agent():
     )
     await run_agent(graphiti_vdb_agent.agent, "Tell me a joke.", thread_id_1)
 
-    # Reinitialize agent
-    graphiti_tools = await graphiti_vdb_agent._get_graphiti_mcp_tools()
-    graphiti_tools_all = await graphiti_vdb_agent._get_graphiti_mcp_tools(exclude=[])
+    graphiti_tools_all = await graphiti_vdb_agent._get_graphiti_mcp_tools(
+        is_read_only=False
+    )
     graphiti_vdb_agent.agent = create_agent(
         model=BASELINE_MODEL_NAME,
-        system_prompt=GRAPHITI_CHROMADB_SYSTEM_PROMPT,
+        system_prompt=BASELINE_MEMORY_PROMPT,
         checkpointer=InMemorySaver(),
-        tools=list(graphiti_tools.values()),
         middleware=[
-            RAGEnhancedAgentMiddleware(graphiti_vdb_agent.chroma_manager),
-            GraphitiChromaDBStorageMiddleware(
-                graphiti_vdb_agent.chroma_manager, graphiti_tools_all
+            GraphitiVDBRetrievalMiddleware(
+                graphiti_tools_all, graphiti_vdb_agent.chroma_manager
             ),
+            GraphitiAugmentationMiddleware(graphiti_tools_all),
+            VDBAugmentationMiddleware(graphiti_vdb_agent.chroma_manager),
         ],
     )
 
-    # --- Conversation 2: Test memory retrieval ---
+    # Conversation 2: Test memory retrieval
     response = await run_agent(graphiti_vdb_agent.agent, SECRET_QUESTION, thread_id_1)
 
-    # Assert that the agent remembers the secret
-    assert SECRET_ANSWER.lower() in response.lower(), (
-        f"Expected '{SECRET_ANSWER}' but got: {response}"
-    )
+    # Verify memory retrieval
+    assert SECRET_ANSWER.lower() in response.lower()

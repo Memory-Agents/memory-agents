@@ -1,0 +1,35 @@
+#!/bin/bash
+# .git/hooks/pre-commit
+
+# Pre-commit hook to run Ruff and Ty in a subdirectory
+
+# --- Configuration ---
+# Set your subdirectory here
+SUBDIR="memory_agents"
+
+# --- Run Ruff ---
+echo "Running Ruff on $SUBDIR..."
+uv run ruff format "$SUBDIR"
+RUFF_STATUS=$?
+
+# --- Run Ty ---
+echo "Running Ty..."
+uv run ty check "$SUBDIR" --config-file "$SUBDIR"/ty.toml
+TY_STATUS=$?
+
+# --- Check results ---
+if [ $RUFF_STATUS -ne 0 ] || [ $TY_STATUS -ne 0 ]; then
+    echo ""
+    echo "🚫 Commit aborted due to lint/type errors."
+    if [ $RUFF_STATUS -ne 0 ]; then
+        echo "- Ruff failed."
+    fi
+    if [ $TY_STATUS -ne 0 ]; then
+        echo "- Ty failed."
+    fi
+    exit 1
+fi
+
+echo "✅ All checks passed."
+exit 0
+
