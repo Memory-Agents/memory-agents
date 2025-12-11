@@ -185,6 +185,7 @@ deactivate
 │   │   │   ├── graphiti.py             # An agent that uses graphiti for memory
 │   │   │   └── graphiti_vdb.py         # An agent that uses graphiti and a vector database for memory
 │   │   ├── config.py                   # Configuration for the agents
+│   │   ├── middleware
 │   │   └── run_agent.py                # Helper function to run the agents
 │   ├── longmemeval                     # Benchmark for evaluating long-term memory in agents
 │   │   ├── src
