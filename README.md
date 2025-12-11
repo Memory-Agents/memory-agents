@@ -1,10 +1,31 @@
-# Memory Augmented Agentic LLM: Initial Setup
+# Memory Augmented Agentic LLM: Comparative AI Memory Architecture Study
 
-This is the repository of the ADL project group 14: Memory Augmented Agentic LLM.
+This repository presents a comprehensive comparative study of different AI memory architectures, implemented as modular middleware systems with comparable prompts and interfaces. The project evaluates various memory approaches including baseline agents, vector database integration, knowledge graph storage, and hybrid solutions to assess their effectiveness in long-term memory retention and retrieval.
 
-It consists of service dependencies provided by a Docker Compose configuration and the memory agents backend.
+## Architecture Overview
 
-The memory agents backend includes the LongMemEval benchmark: https://github.com/xiaowu0162/LongMemEval
+The project implements four distinct memory agent architectures, all built with consistent middleware patterns and comparable system prompts:
+
+- **Baseline Agent** (`memory_agents/core/agents/baseline.py`): Basic memory agent with in-memory checkpointing, serving as the foundation for comparison
+- **Baseline VDB Agent** (`memory_agents/core/agents/baseline_vdb.py`): Enhanced with ChromaDB vector database for persistent conversation storage and semantic search
+- **Graphiti Agent** (`memory_agents/core/agents/graphiti.py`): Knowledge graph-based memory using Graphiti through MCP (Model Context Protocol) for structured entity and relationship storage
+- **Graphiti VDB Agent** (`memory_agents/core/agents/graphiti_vdb.py`): Hybrid approach combining Graphiti knowledge graphs with ChromaDB for comprehensive memory capabilities
+
+## Technology Stack
+
+The project leverages modern technologies optimized for AI memory systems:
+
+- **Docker**: Containerized service orchestration for consistent development and deployment environments
+- **Langfuse**: Advanced tracing and analytics for monitoring agent performance and memory effectiveness
+- **MCP (Model Context Protocol)**: Standardized interface for integrating external tools and services like Graphiti
+- **uv**: Fast Python package manager for efficient dependency management and virtual environments
+- **ty**: Type-safe configuration management for robust agent setup
+- **LangChain**: Comprehensive framework for building memory-augmented language agents
+- **ChromaDB**: High-performance vector database for semantic search and conversation storage
+
+## Evaluation Framework
+
+The project includes automated evaluation through GitHub workflows and the LongMemEval benchmark (https://github.com/xiaowu0162/LongMemEval), providing standardized testing across all memory architectures to ensure fair comparison and measurable performance metrics.
 
 ## Setup
 
@@ -169,52 +190,52 @@ Tree generated with: `tree -I "__pycache__|.git|.venv|env|build|dist|*.egg-info|
 
 ```
 .
-├── LICENSE
-├── README.md
-├── docker-compose-workflow.yml
-├── docker-compose.yml
+├── LICENSE                           # Project license file
+├── README.md                          # Main project documentation
+├── docker-compose-workflow.yml        # Docker Compose configuration for workflow services
+├── docker-compose.yml                 # Main Docker Compose configuration for all services
 ├── examples
-│   └── python_docstring_example.py
+│   └── python_docstring_example.py   # Example demonstrating Python docstring usage
 ├── langfuse
-│   └── docker-compose.yml
+│   └── docker-compose.yml             # Docker Compose configuration for Langfuse tracing service
 ├── memory_agents
-│   ├── README.md
-│   ├── config.py
+│   ├── README.md                      # Memory agents specific documentation
+│   ├── config.py                      # Configuration settings for memory agents
 │   ├── core
 │   │   ├── agents
-│   │   │   ├── baseline.py
-│   │   │   ├── baseline_vdb.py
-│   │   │   ├── graphiti.py
-│   │   │   ├── graphiti_base_agent.py
-│   │   │   ├── graphiti_vdb.py
+│   │   │   ├── baseline.py            # Baseline agent implementation without memory
+│   │   │   ├── baseline_vdb.py        # Baseline agent with vector database memory
+│   │   │   ├── graphiti.py            # Graphiti-based memory agent implementation
+│   │   │   ├── graphiti_base_agent.py # Base class for Graphiti agents
+│   │   │   ├── graphiti_vdb.py        # Graphiti agent with vector database integration
 │   │   │   └── interfaces
-│   │   │       └── clearable_agent.py
-│   │   ├── chroma_db_manager.py
-│   │   ├── config.py
+│   │   │       └── clearable_agent.py # Interface for agents with clearable memory
+│   │   ├── chroma_db_manager.py       # Manages Chroma vector database operations
+│   │   ├── config.py                  # Core configuration settings
 │   │   ├── middleware
-│   │   │   ├── graphiti_augmentation_middleware.py
-│   │   │   ├── graphiti_retrieval_middleware.py
-│   │   │   ├── graphiti_retrieval_middleware_utils.py
-│   │   │   ├── graphiti_vdb_retrieval_middleware.py
-│   │   │   ├── vdb_augmentation_middleware.py
-│   │   │   ├── vdb_retrieval_middleware.py
-│   │   │   └── vdb_retrieval_middlware_utils.py
-│   │   ├── run_agent.py
+│   │   │   ├── graphiti_augmentation_middleware.py    # Middleware for augmenting responses with Graphiti memory
+│   │   │   ├── graphiti_retrieval_middleware.py       # Middleware for retrieving data from Graphiti
+│   │   │   ├── graphiti_retrieval_middleware_utils.py # Utility functions for Graphiti retrieval
+│   │   │   ├── graphiti_vdb_retrieval_middleware.py   # Graphiti middleware with vector database support
+│   │   │   ├── vdb_augmentation_middleware.py         # Middleware for augmenting responses with vector database
+│   │   │   ├── vdb_retrieval_middleware.py            # Middleware for retrieving data from vector database
+│   │   │   └── vdb_retrieval_middlware_utils.py       # Utility functions for vector database retrieval
+│   │   ├── run_agent.py                # Main script for running memory agents
 │   │   └── utils
-│   │       ├── agent_state_utils.py
-│   │       ├── message_conversion_utils.py
-│   │       └── sync_runner.py
-│   ├── pyproject.toml
+│   │       ├── agent_state_utils.py    # Utilities for managing agent state
+│   │       ├── message_conversion_utils.py # Utilities for converting message formats
+│   │       └── sync_runner.py          # Synchronous runner for agent execution
+│   ├── pyproject.toml                  # Python project configuration and dependencies
 │   ├── tests
-│   │   ├── agent_initialization_test.py
-│   │   ├── agent_memory_test.py
-│   │   ├── agent_query_test.py
-│   │   ├── graphiti_tools_available_test.py
-│   │   └── vdb_clear_collection_test.py
-│   ├── ty.toml
-│   └── uv.lock
-├── shared
-└── uv.lock
+│   │   ├── agent_initialization_test.py # Tests for agent initialization
+│   │   ├── agent_memory_test.py        # Tests for agent memory functionality
+│   │   ├── agent_query_test.py         # Tests for agent query processing
+│   │   ├── graphiti_tools_available_test.py # Tests for Graphiti tool availability
+│   │   └── vdb_clear_collection_test.py # Tests for vector database collection clearing
+│   ├── ty.toml                         # Typer configuration for CLI interfaces
+│   └── uv.lock                         # Locked dependency versions for uv package manager
+├── shared                              # Shared utilities and configurations
+└── uv.lock                             # Root-level locked dependency versions
 ```
 
 ## Git pre-commit hooks
