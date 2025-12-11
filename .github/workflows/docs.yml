@@ -24,7 +24,7 @@ jobs:
 
       - name: Generate docs
         run: |
-          uv run pdoc -o docs memory_agents
+          uv run pdoc -o docs .
         working-directory: memory_agents
 
       - name: Deploy to GitHub Pages
