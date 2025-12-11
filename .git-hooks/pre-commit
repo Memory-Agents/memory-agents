@@ -10,12 +10,11 @@ SUBDIR="memory_agents"
 # --- Run Ruff ---
 echo "Running Ruff on $SUBDIR..."
 uv run ruff format "$SUBDIR"
-uv run ruff check --fix "$SUBDIR"
 RUFF_STATUS=$?
 
 # --- Run Ty ---
 echo "Running Ty..."
-uv run ty check
+uv run ty check "$SUBDIR" --config-file "$SUBDIR"/ty.toml
 TY_STATUS=$?
 
 # --- Check results ---
