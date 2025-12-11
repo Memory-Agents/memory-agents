@@ -19,7 +19,7 @@ The project leverages modern technologies to integrate different AI memory syste
 - **Langfuse**: Advanced tracing and analytics for monitoring agent performance and memory effectiveness
 - **MCP (Model Context Protocol)**: Standardized interface for integrating external tools and services like Graphiti
 - **uv**: Fast Python package manager for efficient dependency management and virtual environments
-- **ty**: Reliable and fast type checking for robust agent setup
+- **ty**: Reliable and fast type checking for Python typing
 - **LangChain**: Comprehensive framework for building memory-augmented language agents
 - **ChromaDB**: High-performance vector database for semantic search and conversation storage
 
