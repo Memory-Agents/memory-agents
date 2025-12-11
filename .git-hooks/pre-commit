@@ -14,8 +14,8 @@ uv run ruff check --fix "$SUBDIR"
 RUFF_STATUS=$?
 
 # --- Run Ty ---
-echo "Running Ty on $SUBDIR..."
-uv run ty check "$SUBDIR" -c "$SUBDIR"/pyproject.toml
+echo "Running Ty..."
+uv run ty check
 TY_STATUS=$?
 
 # --- Check results ---

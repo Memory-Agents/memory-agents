@@ -1,0 +1,5 @@
+# Configuration for Python type checker: ty which is run from the repository root directory when invoked by the pre-commit hook.
+
+[tool.ty.src]
+include = ["memory_agents"]
+exclude = ["memory_agents/longmemeval"]
