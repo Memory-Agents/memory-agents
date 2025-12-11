@@ -13,7 +13,7 @@ The project implements four distinct memory agent architectures, all built with 
 
 ## Technology Stack
 
-The project leverages modern technologies optimized for AI memory systems:
+The project leverages modern technologies to integrate different AI memory systems and provide observability:
 
 - **Docker**: Containerized service orchestration for consistent development and deployment environments
 - **Langfuse**: Advanced tracing and analytics for monitoring agent performance and memory effectiveness
