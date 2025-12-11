@@ -210,6 +210,17 @@ deactivate
 └── README.md                           # Main README for the project
 ```
 
+## Git pre-commit hooks
+
+This project uses pre-commit hooks to ensure code quality. To install them:
+
+```bash
+cd memory_agents
+uv run pre-commit install
+```
+
+The pre-commit hooks will run automatically before each commit to check formatting, linting, and other code quality standards.
+
 ## Python formatting and code quality checks
 
 ```
