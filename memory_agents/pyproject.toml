@@ -26,4 +26,5 @@ dependencies = [
     "types-requests>=2.32.4.20250913",
     "pre-commit>=4.5.0",
     "ty>=0.0.1a33",
+    "pdoc>=16.0.0",
 ]
