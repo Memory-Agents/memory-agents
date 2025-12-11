@@ -9,7 +9,7 @@ env:
   OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
 
 jobs:
-  deploy:
+  test:
     runs-on: ubuntu-latest
 
     steps:
