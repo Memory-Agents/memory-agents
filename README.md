@@ -1,4 +1,4 @@
-# Memory Augmented Agentic LLM: Comparative AI Memory Architecture Study
+# Memory Agents: Comparative AI Memory Architecture Study
 
 This repository presents a comprehensive comparative study of different AI memory architectures, implemented as modular middleware systems with comparable prompts and interfaces. The project evaluates various memory approaches including baseline agents, vector database integration, knowledge graph storage, and hybrid solutions to assess their effectiveness in long-term memory retention and retrieval.
 
